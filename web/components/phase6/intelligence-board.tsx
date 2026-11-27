@@ -8,10 +8,11 @@ import { buttonVariants } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
 import { formatScore } from "@/lib/format";
 import { checkDomain, loadDomains, type DomainReport, type SimilarityView } from "@/lib/phase6";
+import { useWorkspaceDataset } from "@/lib/use-dataset";
 
 export function IntelligenceBoard() {
   const params = useSearchParams();
-  const dataset = params.get("dataset") || "dev";
+  const dataset = useWorkspaceDataset();
   const brand = params.get("brand") ?? "";
   const [report, setReport] = useState<DomainReport | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -20,6 +21,7 @@ export function IntelligenceBoard() {
   const [checking, setChecking] = useState(false);
 
   useEffect(() => {
+    if (!dataset) return;
     let cancelled = false;
     setReport(null);
     setError(null);
@@ -48,15 +50,18 @@ export function IntelligenceBoard() {
     }
   }
 
+  if (!dataset) {
+    return <p className="text-sm text-[#949aab]">Loading the dataset.</p>;
+  }
   if (dataset === "empty") {
     return <EmptyState title="No domains to compare">Upload emails in Triage. Sender, reply, and link domains will be scored here.</EmptyState>;
   }
 
   return (
     <div className="grid gap-8">
-      <form onSubmit={onCheck} className="border border-border bg-card p-5">
-        <h2 className="text-base font-semibold">Domain checker</h2>
-        <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+      <form onSubmit={onCheck} className="ls-panel p-4">
+        <h2 className="text-sm font-semibold">URL and domain checker</h2>
+        <p className="mt-1 max-w-xl text-sm text-[#949aab]">
           Score any domain against the protected brands. Nothing is looked up on the network.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
@@ -65,11 +70,11 @@ export function IntelligenceBoard() {
             id="domain-checker"
             value={candidate}
             onChange={(event) => setCandidate(event.target.value)}
-            className="h-9 min-w-64 border border-border bg-background px-3 font-mono text-sm"
+            className="h-11 min-w-72 flex-1 rounded-full border border-white/10 bg-black/35 px-4 font-mono text-sm"
             spellCheck={false}
           />
           <button type="submit" className={buttonVariants()} disabled={checking}>
-            {checking ? "Scoring" : "Score domain"}
+            {checking ? "Scoring" : "Analyze URL"}
           </button>
         </div>
         {checked ? <DiffResult view={checked} /> : null}
@@ -84,7 +89,7 @@ export function IntelligenceBoard() {
         <>
           <section>
             <h2 className="text-base font-semibold">Domains in this dataset</h2>
-            <div className="mt-3 overflow-x-auto border border-border">
+            <div className="mt-3 overflow-x-auto rounded-2xl border border-white/8">
               <table className="w-full text-left text-sm">
                 <thead className="text-muted-foreground">
                   <tr>

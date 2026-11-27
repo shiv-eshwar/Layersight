@@ -16,7 +16,7 @@ export default async function IntelligencePage({
   return (
     <Screen
       title="URL & Domain Intelligence"
-      purpose="Look-alike domains, links whose text hides the real address, and a similarity score for each."
+      purpose="Analyze URLs, detect look-alike domains, and uncover deception techniques."
     >
       {forced === "loading" || forced === "empty" || forced === "error" ? (
         <ScreenState state={forced} />

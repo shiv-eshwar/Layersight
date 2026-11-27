@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { ConfigSummary, DatasetSummary } from "@/lib/types";
 
-export function WorkspaceControls() {
+export function WorkspaceControls({ stacked = false }: { stacked?: boolean }) {
   const params = useSearchParams();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -37,14 +37,17 @@ export function WorkspaceControls() {
     router.replace(text ? `${window.location.pathname}?${text}` : window.location.pathname);
   }
 
+  const field = stacked
+    ? "h-8 w-full rounded-lg border border-white/10 bg-black/40 px-2 text-xs text-foreground"
+    : "h-8 max-w-48 rounded-lg border border-white/10 bg-black/40 px-2 text-sm text-foreground";
   return (
-    <>
-      <label className="text-xs text-muted-foreground">
+    <div className={stacked ? "grid gap-2" : "flex flex-wrap items-center gap-3"}>
+      <label className={stacked ? "grid gap-1 text-[11px] text-[#949aab]" : "text-xs text-muted-foreground"}>
         Dataset
         <select
           aria-label="Dataset"
           data-testid="dataset-select"
-          className="ml-2 h-8 max-w-48 border border-border bg-background px-2 text-sm text-foreground"
+          className={stacked ? field : `ml-2 ${field}`}
           value={dataset}
           onChange={(event) => update({ dataset: event.target.value })}
         >
@@ -56,12 +59,12 @@ export function WorkspaceControls() {
           ))}
         </select>
       </label>
-      <label className="text-xs text-muted-foreground">
+      <label className={stacked ? "grid gap-1 text-[11px] text-[#949aab]" : "text-xs text-muted-foreground"}>
         Config pair
-        <span className="ml-2 inline-flex items-center gap-1" data-testid="config-pair">
+        <span className={stacked ? "grid gap-1" : "ml-2 inline-flex items-center gap-1"} data-testid="config-pair">
           <select
             aria-label="Baseline configuration"
-            className="h-8 max-w-40 border border-border bg-background px-2 text-sm text-foreground"
+            className={field}
             value={baseline}
             onChange={(event) => update({ baseline: event.target.value })}
           >
@@ -72,10 +75,10 @@ export function WorkspaceControls() {
               </option>
             ))}
           </select>
-          <span aria-hidden="true">→</span>
+          <span aria-hidden="true" className={stacked ? "hidden" : undefined}>→</span>
           <select
             aria-label="Comparison configuration"
-            className="h-8 max-w-40 border border-border bg-background px-2 text-sm text-foreground"
+            className={field}
             value={comparison}
             onChange={(event) => update({ comparison: event.target.value })}
           >
@@ -88,6 +91,6 @@ export function WorkspaceControls() {
           </select>
         </span>
       </label>
-    </>
+    </div>
   );
 }

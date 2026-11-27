@@ -26,6 +26,8 @@ interface FlagshipState {
   draft: LayerConfig;
   dirty: boolean;
   assumptionsOpen: boolean;
+  hydrated: boolean;
+  hydrate: (untrained: LayerConfig, trained: LayerConfig) => void;
   updateDraft: (recipe: (config: LayerConfig) => LayerConfig) => void;
   setTrainingLevel: (level: TrainingLevel) => void;
   setCustomCatchRate: (rate: number | null) => void;
@@ -63,6 +65,19 @@ export const useFlagship = create<FlagshipState>((set) => ({
   draft: untrainedConfig(),
   dirty: false,
   assumptionsOpen: false,
+  hydrated: false,
+  hydrate: (untrained, trained) =>
+    set((state) => {
+      if (state.hydrated || state.dirty) return { hydrated: true };
+      return {
+        hydrated: true,
+        versions: [version("untrained", 1, untrained), version("trained", 2, trained)],
+        activeId: "untrained",
+        compareId: "trained",
+        draft: structuredClone(untrained),
+        dirty: false,
+      };
+    }),
   updateDraft: (recipe) =>
     set((state) => ({ draft: recipe(state.draft), dirty: true })),
   setTrainingLevel: (level) =>

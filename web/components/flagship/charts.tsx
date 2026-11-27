@@ -38,7 +38,7 @@ export function FunnelChart({ result }: { result: SimulationResult }) {
   return (
     <figure className="ls-card p-4" data-testid="funnel">
       <figcaption className="text-base font-semibold">Where attacks stop</figcaption>
-      <p className="mt-1 text-sm text-[#8A9BB4]">Modeled estimate · counts for {formatCount(runs)} runs</p>
+      <p className="mt-1 text-sm text-[#949aab]">Modeled estimate · counts for {formatCount(runs)} runs</p>
       <ol className="mt-4 grid gap-3">
         {result.aggregate.layers.map((layer) => {
           const remaining = Math.max(0, layer.entered - layer.stopped);
@@ -47,11 +47,11 @@ export function FunnelChart({ result }: { result: SimulationResult }) {
             <li key={layer.layer}>
               <div className="mb-1 text-sm">
                 <p>{LAYER_LABEL[layer.layer]}</p>
-                <p className="ls-mono text-[#8A9BB4]">
+                <p className="ls-mono text-[#949aab]">
                   {formatCount(layer.stopped)} stopped · {formatCount(remaining)} still in
                 </p>
               </div>
-              <div className="h-2.5 rounded-full bg-[#0B1120]">
+              <div className="h-2.5 rounded-full bg-[#07080c]">
                 <div
                   className="h-2.5 rounded-full"
                   style={{ width: `${width}%`, background: LAYER_COLOR[layer.layer] }}
@@ -62,7 +62,7 @@ export function FunnelChart({ result }: { result: SimulationResult }) {
         })}
       </ol>
       <p className="mt-3 text-sm">
-        <span className="text-[#EF4444]">Passed every layer </span>
+        <span className="text-[#ff5c6c]">Passed every layer </span>
         <span className="ls-mono">{formatCount(passedCount(result))}</span>
       </p>
     </figure>
@@ -84,47 +84,55 @@ export function OutcomeDonut({
   return (
     <figure className="ls-card flex flex-col items-center p-4" data-testid="outcome-donut">
       <figcaption className="self-start text-base font-semibold">Pass-through</figcaption>
-      <p className="self-start text-sm text-[#8A9BB4]">Modeled estimate</p>
+      <p className="self-start text-sm text-[#949aab]">Modeled estimate</p>
       <svg viewBox="0 0 140 140" className="mt-2 h-40 w-40" role="img" aria-label={`Pass-through ${formatPct(passRate)}`}>
-        <circle cx="70" cy="70" r={radius} fill="none" stroke="#10B981" strokeWidth="14" />
+        <circle cx="70" cy="70" r={radius} fill="none" stroke="#3ddc97" strokeWidth="14" />
         <circle
           cx="70"
           cy="70"
           r={radius}
           fill="none"
-          stroke="#EF4444"
+          stroke="#ff5c6c"
           strokeWidth="14"
           strokeDasharray={`${passedLength} ${circumference - passedLength}`}
           strokeLinecap="butt"
           transform="rotate(-90 70 70)"
         />
-        <text x="70" y="66" textAnchor="middle" fill="#EF4444" fontSize="16" fontFamily="ui-monospace, monospace">
+        <text x="70" y="66" textAnchor="middle" fill="#ff5c6c" fontSize="16" fontFamily="ui-monospace, monospace">
           {formatPct(passRate)}
         </text>
-        <text x="70" y="84" textAnchor="middle" fill="#8A9BB4" fontSize="9">
+        <text x="70" y="84" textAnchor="middle" fill="#949aab" fontSize="9">
           passed
         </text>
       </svg>
       <dl className="mt-2 grid w-full gap-1 text-sm">
         <div className="flex justify-between gap-3">
-          <dt className="text-[#10B981]">Blocked</dt>
+          <dt className="text-[#3ddc97]">Blocked</dt>
           <dd className="ls-mono">{formatPct(1 - passRate)}</dd>
         </div>
         <div className="flex justify-between gap-3">
-          <dt className="text-[#EF4444]">Passed</dt>
-          <dd className="ls-mono" data-testid="pass-through">
+          <dt className="text-[#ff5c6c]">Passed</dt>
+          <dd
+            className="ls-mono"
+            data-testid="pass-rate"
+            data-value={result.aggregate.pass_rate}
+          >
             {formatPct(result.aggregate.pass_rate)}
           </dd>
         </div>
         <div className="flex justify-between gap-3">
-          <dt className="text-[#8A9BB4]">Closed form</dt>
-          <dd className="ls-mono" data-testid="closed-form">
+          <dt className="text-[#949aab]">Closed form</dt>
+          <dd
+            className="ls-mono"
+            data-testid="closed-form"
+            data-value={result.aggregate.closed_form}
+          >
             {formatPct(result.aggregate.closed_form)}
           </dd>
         </div>
         <div className="flex justify-between gap-3">
-          <dt className="text-[#8A9BB4]">95% interval</dt>
-          <dd className="ls-mono">
+          <dt className="text-[#949aab]">95% interval</dt>
+          <dd className="ls-mono" data-testid="ci95">
             {formatPct(low)}–{formatPct(high)}
           </dd>
         </div>
@@ -142,28 +150,28 @@ export function AttackFlow({ result }: { result: SimulationResult }) {
   return (
     <figure className="ls-card p-4" data-testid="attack-flow">
       <figcaption className="text-base font-semibold">Attack flow</figcaption>
-      <p className="mt-1 text-sm text-[#8A9BB4]">
+      <p className="mt-1 text-sm text-[#949aab]">
         {reduced
           ? "Motion is off. The counts below are the modeled stops."
           : "Each dot is a share of the modeled stops. Green drops out where a layer stops the attack. Red reaches the end."}
       </p>
       <div className="attack-stage mt-4">
-        <div className="absolute top-[36%] right-0 left-0 h-px bg-[#24324A]" />
+        <div className="absolute top-[36%] right-0 left-0 h-px bg-[#2a2e3c]" />
         {LAYERS.map((layer, index) => (
           <div
             key={layer}
             className="absolute top-2 w-24 -translate-x-1/2 text-center"
             style={{ left: stops[index] }}
           >
-            <p className="text-xs text-[#8A9BB4]">{index + 1}</p>
+            <p className="text-xs text-[#949aab]">{index + 1}</p>
             <p className="text-sm">{LAYER_LABEL[layer]}</p>
-            <p className="ls-mono text-xs text-[#10B981]">{formatCount(stopped[index] ?? 0)} stop</p>
+            <p className="ls-mono text-xs text-[#3ddc97]">{formatCount(stopped[index] ?? 0)} stop</p>
           </div>
         ))}
         <div className="absolute top-2 right-0 text-right">
-          <p className="text-xs text-[#8A9BB4]">Out</p>
-          <p className="text-sm text-[#EF4444]">Passed</p>
-          <p className="ls-mono text-xs text-[#EF4444]">{formatCount(passed)}</p>
+          <p className="text-xs text-[#949aab]">Out</p>
+          <p className="text-sm text-[#ff5c6c]">Passed</p>
+          <p className="ls-mono text-xs text-[#ff5c6c]">{formatCount(passed)}</p>
         </div>
         {reduced
           ? null
@@ -230,12 +238,12 @@ export function StopBars({
   return (
     <figure className="ls-card p-4" data-testid={`stop-bars-${mode}`}>
       <figcaption className="text-base font-semibold">{title}</figcaption>
-      <p className="mt-1 text-sm text-[#8A9BB4]">Share of runs stopped by each layer, then passed</p>
+      <p className="mt-1 text-sm text-[#949aab]">Share of runs stopped by each layer, then passed</p>
       <ul className="mt-4 grid gap-3">
         {rows.map((row) => (
           <li key={row.key}>
             <p className="mb-1 text-sm">{row.label}</p>
-            <div className="flex h-3 overflow-hidden rounded-full bg-[#0B1120]">
+            <div className="flex h-3 overflow-hidden rounded-full bg-[#07080c]">
               {row.shares.map((share, index) => (
                 <span
                   key={`${row.key}-${index}`}
@@ -246,7 +254,7 @@ export function StopBars({
           </li>
         ))}
       </ul>
-      <ul className="mt-3 flex flex-wrap gap-3 text-xs text-[#8A9BB4]">
+      <ul className="mt-3 flex flex-wrap gap-3 text-xs text-[#949aab]">
         {LAYERS.map((layer) => (
           <li key={layer} className="flex items-center gap-1">
             <span className="inline-block h-2 w-2" style={{ background: LAYER_COLOR[layer] }} />
@@ -254,7 +262,7 @@ export function StopBars({
           </li>
         ))}
         <li className="flex items-center gap-1">
-          <span className="inline-block h-2 w-2 bg-[#EF4444]" />
+          <span className="inline-block h-2 w-2 bg-[#ff5c6c]" />
           Passed
         </li>
       </ul>
@@ -269,7 +277,7 @@ export function TornadoChart({ rows }: { rows: SensitivityRow[] }) {
   return (
     <figure className="ls-card p-4" data-testid="tornado">
       <figcaption className="text-base font-semibold">Sensitivity</figcaption>
-      <p className="mt-1 text-sm text-[#8A9BB4]">
+      <p className="mt-1 text-sm text-[#949aab]">
         Modeled estimate · each applicable layer moved 10 points. Red is a higher pass-through.
       </p>
       <ul className="mt-4 grid gap-3">
@@ -279,14 +287,14 @@ export function TornadoChart({ rows }: { rows: SensitivityRow[] }) {
           return (
             <li key={row.layer} className="grid grid-cols-[9rem_1fr] items-center gap-3 text-sm">
               <span>{LAYER_LABEL[row.layer as LayerName]}</span>
-              <div className="relative h-3 bg-[#0B1120]">
-                <span className="absolute top-0 left-1/2 h-3 w-px bg-[#8A9BB4]" />
+              <div className="relative h-3 bg-[#07080c]">
+                <span className="absolute top-0 left-1/2 h-3 w-px bg-[#949aab]" />
                 <span
-                  className="absolute top-0 h-3 bg-[#EF4444]"
+                  className="absolute top-0 h-3 bg-[#ff5c6c]"
                   style={{ left: "50%", width: `${(worse / scale) * 50}%` }}
                 />
                 <span
-                  className="absolute top-0 h-3 bg-[#10B981]"
+                  className="absolute top-0 h-3 bg-[#3ddc97]"
                   style={{ right: "50%", width: `${(better / scale) * 50}%` }}
                 />
               </div>
@@ -294,7 +302,7 @@ export function TornadoChart({ rows }: { rows: SensitivityRow[] }) {
           );
         })}
       </ul>
-      <p className="mt-3 text-xs text-[#8A9BB4]">
+      <p className="mt-3 text-xs text-[#949aab]">
         {`Center is the current pass-through, ${rows[0] ? formatPct(rows[0].baseline) : ""}. Green means the layer was strengthened.`}
       </p>
     </figure>
@@ -316,7 +324,7 @@ export function ApplicabilityMatrix({
     <figure className="ls-card overflow-x-auto p-4" data-testid="applicability-matrix">
       <figcaption className="text-base font-semibold">What each layer can see</figcaption>
       <table className="mt-3 w-full min-w-[32rem] text-left text-sm">
-        <thead className="text-[#8A9BB4]">
+        <thead className="text-[#949aab]">
           <tr>
             <th className="py-1 pr-3 font-medium">Attack</th>
             {LAYERS.map((layer) => (
@@ -328,14 +336,14 @@ export function ApplicabilityMatrix({
         </thead>
         <tbody>
           {vectors.map(([label, flags]) => (
-            <tr key={label} className="border-t border-[#24324A]">
+            <tr key={label} className="border-t border-[#2a2e3c]">
               <th className="py-2 pr-3 font-normal">{label}</th>
               {flags.map((applies, index) => (
                 <td key={`${label}-${index}`} className="px-2 py-2">
                   {applies ? (
-                    <span className="text-[#10B981]">Applies</span>
+                    <span className="text-[#3ddc97]">Applies</span>
                   ) : (
-                    <span className="text-[#8A9BB4]">Not applicable</span>
+                    <span className="text-[#949aab]">Not applicable</span>
                   )}
                 </td>
               ))}

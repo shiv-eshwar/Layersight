@@ -2,7 +2,7 @@
 
 The judge path is Triage, one investigation, the simulator, the comparison, then Reports, and a title card. `make rehearse` runs that path three times and writes `demo/rehearsals/latest.json`. The exit is two consecutive clean runs under 3:00.
 
-Say the lines below. Use the numbers on the screen. On the offline harness those numbers are labeled illustrative (9.21%, 3.29%, 64.3%). On the live app, use the engine figures instead.
+Say the lines below. Use the numbers on the screen. On the offline harness those numbers are labeled illustrative (9.21%, 3.29%, 64.3%). On the live app, the practice set at seed 42 is 20/20, untrained 9.59%, trained 3.82%, a 60.2% reduction. `make e2e-app` walks that path while `make dev` is running.
 
 | Time | Screen | Say |
 |---|---|---|

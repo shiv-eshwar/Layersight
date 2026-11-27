@@ -64,7 +64,12 @@ export function Report() {
     <article className="report-sheet flex flex-col gap-8">
       <header>
         <p className="font-mono text-5xl tabular-nums">
-          {labeled > 0 ? `${correct} / ${labeled}` : "No labels"}
+          <span data-testid="report-correct" data-value={correct}>{correct}</span>
+          {" / "}
+          <span data-testid="report-total" data-value={labeled}>{labeled > 0 ? labeled : "No labels"}</span>
+        </p>
+        <p data-testid="accuracy" data-value={report.accuracy ?? 0} className="sr-only">
+          {labeled > 0 ? formatPct(report.accuracy ?? 0) : "No labels"}
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
           {labeled > 0
@@ -76,7 +81,7 @@ export function Report() {
       {labeled > 0 ? (
         <>
           <section className="grid gap-6 md:grid-cols-[16rem_1fr]">
-            <table className="border border-border text-sm">
+            <table className="border border-border text-sm" data-testid="confusion-matrix">
               <caption className="px-3 py-2 text-left text-muted-foreground">Confusion matrix</caption>
               <thead>
                 <tr className="text-muted-foreground">
@@ -136,7 +141,7 @@ export function Report() {
 
       <section className="overflow-x-auto">
         <h2 className="text-base font-semibold">Per email</h2>
-        <table className="mt-3 w-full text-left text-sm">
+        <table className="mt-3 w-full text-left text-sm" data-testid="per-email-table">
           <thead className="text-muted-foreground">
             <tr className="border-b border-border">
               <th className="py-2 font-medium">Subject</th>
@@ -162,7 +167,13 @@ export function Report() {
         </table>
       </section>
 
-      <footer className="grid gap-2 border-t border-border pt-4 text-sm sm:grid-cols-2">
+      <footer
+        className="grid gap-2 border-t border-border pt-4 text-sm sm:grid-cols-2"
+        data-testid="reproducibility"
+        data-engine-version={report.engine_version}
+        data-weights-hash={report.weights_hash}
+        data-seed={report.pass_through.seed}
+      >
         <p>Engine version <span className="font-mono">{report.engine_version}</span></p>
         <p>Weights hash <span className="font-mono">{report.weights_hash}</span></p>
         <p>Seed <span className="font-mono">{report.pass_through.seed}</span></p>
@@ -182,6 +193,9 @@ export function Report() {
         <button type="button" className="text-sm text-intelligence underline-offset-2 hover:underline" onClick={() => window.print()}>
           Print report
         </button>
+        <Link className="text-sm text-intelligence underline-offset-2 hover:underline" href="/demo/title" data-testid="show-title-card">
+          End on the title card
+        </Link>
       </div>
     </article>
   );

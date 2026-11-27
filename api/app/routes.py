@@ -11,6 +11,7 @@ from app.services import (
     APIError,
     compare_configs,
     email_detail,
+    get_config,
     import_config_text,
     ingest,
     list_configs,
@@ -18,6 +19,7 @@ from app.services import (
     list_emails,
     load_run,
     override_vector,
+    parse_config,
     recommend_dataset,
     report_csv,
     reset_demo,
@@ -47,6 +49,17 @@ def configs() -> JSONResponse:
     db = next(session())
     try:
         return JSONResponse(list_configs(db))
+    except APIError as exc:
+        return _fail(exc)
+    finally:
+        db.close()
+
+
+@router.get("/configs/{config_id}")
+def one_config(config_id: str) -> JSONResponse:
+    db = next(session())
+    try:
+        return JSONResponse(get_config(db, config_id))
     except APIError as exc:
         return _fail(exc)
     finally:
@@ -199,15 +212,19 @@ def report_csv_route(
 class SimulationBody(BaseModel):
     dataset_id: str
     config_id: str | None = None
+    config: dict[str, object] | None = None
     runs: int = Field(default=10000, ge=1, le=100_000)
     seed: int = 42
     persist: bool = True
+    closed_form: bool = False
 
 
 class ComparisonBody(BaseModel):
     dataset_id: str
-    config_a_id: str
-    config_b_id: str
+    config_a_id: str | None = None
+    config_b_id: str | None = None
+    config_a: dict[str, object] | None = None
+    config_b: dict[str, object] | None = None
     runs: int = Field(default=10000, ge=1, le=100_000)
     seed: int = 42
 
@@ -215,6 +232,7 @@ class ComparisonBody(BaseModel):
 class RecommendationBody(BaseModel):
     dataset_id: str
     config_id: str | None = None
+    config: dict[str, object] | None = None
 
 
 class VectorBody(BaseModel):
@@ -239,6 +257,7 @@ def import_config(file: UploadFile = File(...)) -> JSONResponse:
 def simulations(body: SimulationBody) -> JSONResponse:
     db = next(session())
     try:
+        config = parse_config(body.config) if body.config is not None else None
         return JSONResponse(
             simulate_dataset(
                 db,
@@ -247,6 +266,8 @@ def simulations(body: SimulationBody) -> JSONResponse:
                 runs=body.runs,
                 seed=body.seed,
                 persist=body.persist,
+                config=config,
+                closed_form_only=body.closed_form,
             )
         )
     except APIError as exc:
@@ -270,6 +291,8 @@ def simulation(run_id: str) -> JSONResponse:
 def comparisons(body: ComparisonBody) -> JSONResponse:
     db = next(session())
     try:
+        config_a = parse_config(body.config_a) if body.config_a is not None else None
+        config_b = parse_config(body.config_b) if body.config_b is not None else None
         return JSONResponse(
             compare_configs(
                 db,
@@ -278,6 +301,8 @@ def comparisons(body: ComparisonBody) -> JSONResponse:
                 body.config_b_id,
                 runs=body.runs,
                 seed=body.seed,
+                config_a=config_a,
+                config_b=config_b,
             )
         )
     except APIError as exc:
@@ -290,7 +315,8 @@ def comparisons(body: ComparisonBody) -> JSONResponse:
 def recommendations(body: RecommendationBody) -> JSONResponse:
     db = next(session())
     try:
-        return JSONResponse(recommend_dataset(db, body.dataset_id, body.config_id))
+        config = parse_config(body.config) if body.config is not None else None
+        return JSONResponse(recommend_dataset(db, body.dataset_id, body.config_id, config))
     except APIError as exc:
         return _fail(exc)
     finally:

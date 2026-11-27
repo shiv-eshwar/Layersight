@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useWorkspaceDataset } from "@/lib/use-dataset";
 import { useEffect, useState } from "react";
 
 import { EmptyState } from "@/components/shell/empty-state";
@@ -17,8 +17,7 @@ import {
 } from "@/lib/phase6";
 
 export function AcademyQuiz() {
-  const params = useSearchParams();
-  const dataset = params.get("dataset") || "dev";
+  const dataset = useWorkspaceDataset();
   const [questions, setQuestions] = useState<QuizQuestion[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
@@ -28,6 +27,7 @@ export function AcademyQuiz() {
   const [applied, setApplied] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!dataset) return;
     let cancelled = false;
     setQuestions(null);
     setError(null);
@@ -59,7 +59,7 @@ export function AcademyQuiz() {
   });
 
   async function pick(optionId: string) {
-    if (!questions) return;
+    if (!dataset || !questions) return;
     const question = questions[index];
     if (!question || chosen[question.id]) return;
     const next = { ...chosen, [question.id]: optionId };
@@ -70,11 +70,14 @@ export function AcademyQuiz() {
   }
 
   async function finish() {
-    if (!questions) return;
+    if (!dataset || !questions) return;
     const answers = questions.map((question) => ({ question_id: question.id, chosen: chosen[question.id] ?? "" }));
     setFinalGrade(await gradeQuiz(dataset, answers, true));
   }
 
+  if (!dataset) {
+    return <p className="text-sm text-muted-foreground">Loading the dataset.</p>;
+  }
   if (dataset === "empty") {
     return (
       <EmptyState title="No questions yet">

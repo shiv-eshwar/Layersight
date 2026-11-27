@@ -9,7 +9,7 @@ export default function TriagePage() {
   return (
     <Screen
       title="Email Triage"
-      purpose="Bring emails in, then sort them by risk once the engine has classified them."
+      purpose="Upload, analyze, and classify emails. Get risk scores, evidence, and layered defense insights."
     >
       <Suspense fallback={<p className="text-sm text-muted-foreground">Loading triage…</p>}>
         <TriageInbox />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { CircleQuestionMark } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -26,7 +27,7 @@ const fallback: Statement[] = [
   },
 ];
 
-export function AssumptionsSheet() {
+export function AssumptionsSheet({ nav = false }: { nav?: boolean }) {
   const [statements, setStatements] = useState<Statement[]>(fallback);
   const [source, setSource] = useState("The engine did not respond. These are the documented defaults.");
 
@@ -58,7 +59,28 @@ export function AssumptionsSheet() {
 
   return (
     <Sheet>
-      <SheetTrigger render={<Button variant="outline" size="sm" />}>Assumptions</SheetTrigger>
+      <SheetTrigger
+        render={
+          nav ? (
+            <button
+              type="button"
+              data-testid="assumptions-button"
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm text-[#b7bdca] hover:bg-white/5 hover:text-white"
+            />
+          ) : (
+            <Button variant="outline" size="sm" data-testid="assumptions-button" />
+          )
+        }
+      >
+        {nav ? (
+          <>
+            <CircleQuestionMark className="size-4" />
+            Help & Docs
+          </>
+        ) : (
+          "Assumptions"
+        )}
+      </SheetTrigger>
       <SheetContent className="overflow-y-auto sm:max-w-md">
         <SheetHeader>
           <SheetTitle>Modeled estimates</SheetTitle>
@@ -66,7 +88,7 @@ export function AssumptionsSheet() {
             Pass-through rates are estimates from these assumptions, not measurements of a live network.
           </SheetDescription>
         </SheetHeader>
-        <div className="flex flex-col gap-4 px-4 pb-6 text-sm leading-6">
+        <div className="flex flex-col gap-4 px-4 pb-6 text-sm leading-6" data-testid="assumptions-panel">
           <p className="text-muted-foreground">{source}</p>
           {statements.map((item) => (
             <section key={item.title}>

@@ -1,4 +1,4 @@
-.PHONY: setup test dev api web db db-stop simulate compare recommend demo types e2e rehearse video perf offline-check demo-check
+.PHONY: setup test dev api web db db-stop simulate compare recommend validate demo types e2e e2e-app rehearse video perf offline-check demo-check
 
 # Postgres in Docker when it is available, then the API and the web app on the host.
 dev:
@@ -42,12 +42,18 @@ compare:
 		--a data/test/configs/untrained.yaml \
 		--b data/test/configs/trained.yaml --runs 10000 --seed 42
 
+validate:
+	uv run layersight validate data/test/emails --labels data/test/labels.csv
+
 recommend:
 	uv run layersight recommend data/test/emails \
 		--config data/test/configs/untrained.yaml
 
 e2e:
 	./scripts/demo/e2e.sh
+
+e2e-app:
+	cd web/e2e && E2E_TARGET=app pnpm exec playwright test app-path.spec.ts
 
 rehearse:
 	./scripts/demo/rehearse.sh

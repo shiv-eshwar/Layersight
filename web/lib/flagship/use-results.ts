@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 
 import {
@@ -8,12 +8,10 @@ import {
   fetchRecommendations,
   fetchSimulation,
 } from "@/lib/flagship/api";
-import { compare, recommend, simulate } from "@/lib/flagship/model";
 import type {
   ComparisonResult,
   LayerConfig,
   RecommendationSet,
-  SimEmail,
   SimulationResult,
 } from "@/lib/flagship/types";
 
@@ -28,104 +26,101 @@ function useDebounced<T>(value: T, delayMs: number): T {
 
 export function useSimulationPreview(
   config: LayerConfig,
-  emails: readonly SimEmail[],
+  datasetId: string | null,
   runs: number,
   seed: number,
-): { result: SimulationResult; source: "preview" | "api"; loading: boolean } {
-  const local = useMemo(
-    () => simulate(emails, config, runs, seed),
-    [emails, config, runs, seed],
-  );
+  closedForm = false,
+): { result: SimulationResult | null; loading: boolean; error: string | null } {
   const requestKey = useMemo(
-    () => JSON.stringify({ config, emailIds: emails.map((email) => email.email_id), runs, seed }),
-    [config, emails, runs, seed],
+    () => JSON.stringify({ config, runs, seed, closedForm }),
+    [config, runs, seed, closedForm],
   );
-  const debouncedKey = useDebounced(requestKey, 150);
+  const debouncedKey = useDebounced(requestKey, closedForm ? 40 : 120);
   const query = useQuery({
-    queryKey: ["flagship-simulation", debouncedKey],
+    queryKey: ["flagship-simulation", datasetId, debouncedKey],
+    enabled: Boolean(datasetId),
+    placeholderData: keepPreviousData,
     queryFn: () => {
       const parsed = JSON.parse(debouncedKey) as {
         config: LayerConfig;
-        emailIds: string[];
         runs: number;
         seed: number;
+        closedForm: boolean;
       };
-      return fetchSimulation({ ...parsed, persist: false });
+      return fetchSimulation({
+        datasetId: datasetId ?? "",
+        config: parsed.config,
+        runs: parsed.runs,
+        seed: parsed.seed,
+        persist: false,
+        closedForm: parsed.closedForm,
+      });
     },
   });
-  const remote = debouncedKey === requestKey ? query.data ?? null : null;
   return {
-    result: remote ?? local,
-    source: remote ? "api" : "preview",
-    loading: query.isFetching,
+    result: datasetId ? query.data ?? null : null,
+    loading: Boolean(datasetId) && (query.isFetching || query.data == null),
+    error: query.error instanceof Error ? query.error.message : null,
   };
 }
 
 export function useComparisonPreview(
   configA: LayerConfig,
   configB: LayerConfig,
-  emails: readonly SimEmail[],
+  datasetId: string | null,
   runs: number,
   seed: number,
-): { result: ComparisonResult; source: "preview" | "api"; loading: boolean } {
-  const local = useMemo(
-    () => compare(emails, configA, configB, runs, seed),
-    [emails, configA, configB, runs, seed],
-  );
+): { result: ComparisonResult | null; loading: boolean; error: string | null } {
   const requestKey = useMemo(
-    () =>
-      JSON.stringify({
-        configA,
-        configB,
-        emailIds: emails.map((email) => email.email_id),
-        runs,
-        seed,
-      }),
-    [configA, configB, emails, runs, seed],
+    () => JSON.stringify({ configA, configB, runs, seed }),
+    [configA, configB, runs, seed],
   );
-  const debouncedKey = useDebounced(requestKey, 150);
+  const debouncedKey = useDebounced(requestKey, 120);
   const query = useQuery({
-    queryKey: ["flagship-comparison", debouncedKey],
-    queryFn: () =>
-      fetchComparison(
-        JSON.parse(debouncedKey) as {
-          configA: LayerConfig;
-          configB: LayerConfig;
-          emailIds: string[];
-          runs: number;
-          seed: number;
-        },
-      ),
+    queryKey: ["flagship-comparison", datasetId, debouncedKey],
+    enabled: Boolean(datasetId),
+    placeholderData: keepPreviousData,
+    queryFn: () => {
+      const parsed = JSON.parse(debouncedKey) as {
+        configA: LayerConfig;
+        configB: LayerConfig;
+        runs: number;
+        seed: number;
+      };
+      return fetchComparison({
+        datasetId: datasetId ?? "",
+        configA: parsed.configA,
+        configB: parsed.configB,
+        runs: parsed.runs,
+        seed: parsed.seed,
+      });
+    },
   });
-  const remote = debouncedKey === requestKey ? query.data ?? null : null;
   return {
-    result: remote ?? local,
-    source: remote ? "api" : "preview",
-    loading: query.isFetching,
+    result: datasetId ? query.data ?? null : null,
+    loading: Boolean(datasetId) && (query.isFetching || query.data == null),
+    error: query.error instanceof Error ? query.error.message : null,
   };
 }
 
 export function useRecommendationPreview(
   config: LayerConfig,
-  emails: readonly SimEmail[],
-): { result: RecommendationSet; source: "preview" | "api"; loading: boolean } {
-  const local = useMemo(() => recommend(emails, config), [emails, config]);
-  const requestKey = useMemo(
-    () => JSON.stringify({ config, emailIds: emails.map((email) => email.email_id) }),
-    [config, emails],
-  );
-  const debouncedKey = useDebounced(requestKey, 150);
+  datasetId: string | null,
+): { result: RecommendationSet | null; loading: boolean; error: string | null } {
+  const requestKey = useMemo(() => JSON.stringify({ config }), [config]);
+  const debouncedKey = useDebounced(requestKey, 120);
   const query = useQuery({
-    queryKey: ["flagship-recommendations", debouncedKey],
-    queryFn: () =>
-      fetchRecommendations(
-        JSON.parse(debouncedKey) as { config: LayerConfig; emailIds: string[] },
-      ),
+    queryKey: ["flagship-recommendations", datasetId, debouncedKey],
+    enabled: Boolean(datasetId),
+    placeholderData: keepPreviousData,
+    queryFn: () => {
+      const parsed = JSON.parse(debouncedKey) as { config: LayerConfig };
+      return fetchRecommendations({ datasetId: datasetId ?? "", config: parsed.config });
+    },
   });
-  const remote = debouncedKey === requestKey ? query.data ?? null : null;
   return {
-    result: remote ?? local,
-    source: remote ? "api" : "preview",
-    loading: query.isFetching,
+    result: datasetId ? query.data ?? null : null,
+    loading: Boolean(datasetId) && (query.isFetching || query.data == null),
+    error: query.error instanceof Error ? query.error.message : null,
   };
 }

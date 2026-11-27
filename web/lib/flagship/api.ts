@@ -1,20 +1,8 @@
 import type { ComparisonResult, LayerConfig, RecommendationSet, SimulationResult } from "@/lib/flagship/types";
 
-const ABSENT = "absent";
-const READY = "ready";
-
-let simulationApi: "unknown" | typeof READY | typeof ABSENT = "unknown";
-
 export function apiBaseUrl(): string {
+  if (typeof window !== "undefined") return "";
   return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-}
-
-export function simulationApiStatus(): "unknown" | "ready" | "absent" {
-  return simulationApi;
-}
-
-export function resetSimulationApiProbe(): void {
-  simulationApi = "unknown";
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -30,6 +18,7 @@ function isComparisonResult(value: unknown): value is ComparisonResult {
   if (!isRecord(value)) return false;
   return (
     typeof value.narrative === "string" &&
+    Array.isArray(value.changes) &&
     isSimulationResult(value.result_a) &&
     isSimulationResult(value.result_b)
   );
@@ -40,73 +29,87 @@ function isRecommendationSet(value: unknown): value is RecommendationSet {
   return Array.isArray(value.recommendations) && Array.isArray(value.sensitivity);
 }
 
-async function postJson(path: string, body: unknown): Promise<unknown | null> {
-  if (simulationApi === ABSENT) return null;
-  try {
-    const response = await fetch(`${apiBaseUrl()}${path}`, {
-      method: "POST",
-      headers: { "content-type": "application/json", accept: "application/json" },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(800),
-    });
-    if (response.status === 404 || response.status === 405) {
-      simulationApi = ABSENT;
-      return null;
-    }
-    if (!response.ok) return null;
-    simulationApi = READY;
-    return (await response.json()) as unknown;
-  } catch {
-    simulationApi = ABSENT;
-    return null;
+async function postJson(path: string, body: unknown): Promise<unknown> {
+  const response = await fetch(`${apiBaseUrl()}${path}`, {
+    method: "POST",
+    headers: { "content-type": "application/json", accept: "application/json" },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!response.ok) {
+    throw new Error(`Simulation request failed (${response.status})`);
   }
+  return (await response.json()) as unknown;
 }
 
 export interface SimulationRequest {
+  datasetId: string;
   config: LayerConfig;
-  emailIds: string[];
   runs: number;
   seed: number;
   persist: boolean;
+  closedForm?: boolean;
 }
 
-export async function fetchSimulation(request: SimulationRequest): Promise<SimulationResult | null> {
+export async function fetchSimulation(request: SimulationRequest): Promise<SimulationResult> {
   const body = await postJson("/api/v1/simulations", {
+    dataset_id: request.datasetId,
     config: request.config,
-    email_ids: request.emailIds,
     runs: request.runs,
     seed: request.seed,
     persist: request.persist,
+    closed_form: request.closedForm ?? false,
   });
-  return isSimulationResult(body) ? body : null;
+  if (!isSimulationResult(body)) {
+    throw new Error("The simulation response did not match the engine.");
+  }
+  return body;
 }
 
 export async function fetchComparison(input: {
+  datasetId: string;
   configA: LayerConfig;
   configB: LayerConfig;
-  emailIds: string[];
   runs: number;
   seed: number;
-}): Promise<ComparisonResult | null> {
+}): Promise<ComparisonResult> {
   const body = await postJson("/api/v1/comparisons", {
+    dataset_id: input.datasetId,
     config_a: input.configA,
     config_b: input.configB,
-    email_ids: input.emailIds,
     runs: input.runs,
     seed: input.seed,
   });
-  return isComparisonResult(body) ? body : null;
+  if (!isComparisonResult(body)) {
+    throw new Error("The comparison response did not match the engine.");
+  }
+  return body;
 }
 
 export async function fetchRecommendations(input: {
+  datasetId: string;
   config: LayerConfig;
-  emailIds: string[];
-}): Promise<RecommendationSet | null> {
+}): Promise<RecommendationSet> {
   const body = await postJson("/api/v1/recommendations", {
+    dataset_id: input.datasetId,
     config: input.config,
-    email_ids: input.emailIds,
   });
-  return isRecommendationSet(body) ? body : null;
+  if (!isRecommendationSet(body)) {
+    throw new Error("The recommendation response did not match the engine.");
+  }
+  return body;
+}
+
+export async function fetchStoredConfig(configId: string): Promise<LayerConfig> {
+  const response = await fetch(`${apiBaseUrl()}/api/v1/configs/${configId}`, {
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!response.ok) throw new Error(`Configuration ${configId} is not stored.`);
+  const body: unknown = await response.json();
+  if (!isRecord(body) || !isRecord(body.config) || typeof body.config.name !== "string") {
+    throw new Error("The stored configuration is unreadable.");
+  }
+  return body.config as unknown as LayerConfig;
 }
 
 export async function fetchMeta(): Promise<{ engine_version: string } | null> {

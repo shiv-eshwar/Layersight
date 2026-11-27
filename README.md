@@ -53,7 +53,7 @@ make e2e
 
 That installs the Playwright package on first use, then walks Triage, the top phishing email, the simulator, the comparison, and Reports. The same path is timed three times with `make rehearse`. Two consecutive clean runs must finish under 3:00. `make offline-check` fails the run if a page asks for anything other than loopback, which is the Wi-Fi-off case: localhost still serves the demo. `make perf` checks the budgets in `engineering.md` section 24. `make video` writes `demo/backup/demo-fallback.webm`. Copy that file to the desktop before presenting.
 
-The product demo, once the stack is up, is `make dev` and then http://localhost:3000. Point the same specs at that app with `E2E_TARGET=app make e2e` when the screens expose the test ids in `web/e2e/contract.ts`. `web/components/layersight/screen-state.tsx` is the loading, empty, and error shell those screens use.
+The product demo, once the stack is up, is `make dev` and then http://localhost:3000. `make e2e-app` walks Triage, the top phishing email, the simulator, the comparison, and Reports against that app. On the practice set, seed 42, the engine reports 20/20 and a modeled pass-through of 9.59% untrained, 3.82% trained, a 60.2% reduction. `web/components/layersight/screen-state.tsx` is the loading, empty, and error shell those screens use.
 
 The harness on port 4173 is labeled illustrative. It uses the published five-layer scenario (9.21% untrained, 3.29% trained, 64.3% reduction) so the path can be rehearsed before the engine is seeded. The live app replaces those figures with engine results. Spoken lines and the backup-video steps are in `demo/REHEARSAL.md`.
 
@@ -62,11 +62,12 @@ The harness on port 4173 is labeled illustrative. It uses the published five-lay
 If the browser fails, the terminal still answers the core target. From a checkout with the engine installed (`make setup`):
 
 ```bash
+make validate
 make simulate
 make compare
 ```
 
-Those are the development-set commands. The official set uses the same CLI:
+`make validate` scores `data/test/`. `make simulate` and `make compare` use the same set, seed 42, and 10,000 runs. The same commands with explicit paths:
 
 ```bash
 layersight validate data/test/emails --labels data/test/labels.csv

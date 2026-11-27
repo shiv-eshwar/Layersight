@@ -8,7 +8,7 @@ export default function DefensePage() {
   return (
     <Screen
       title="Defense Layer Builder"
-      purpose="Set the five layers: email filter, user training, application control, antivirus, and segmentation. Residual risk updates from the closed form as you edit."
+      purpose="Configure your layered defense, simulate its effectiveness, and compare results before and after training."
     >
       <FlagshipProviders>
         <DefenseScreen />

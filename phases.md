@@ -88,13 +88,13 @@ flowchart LR
 
 **Goal:** everything the UI needs over HTTP, stored and reproducible.
 
-- [ ] FastAPI app, settings, CORS, problem+json errors.
-- [ ] SQLAlchemy models and first migration.
-- [ ] Services and all routers from `engineering.md` §19.
-- [ ] Multipart and zip upload with limits.
-- [ ] Seed command, `DEMO_MODE`, `/demo/reset`.
-- [ ] `make types` generates TS types.
-- [ ] API tests.
+- [x] FastAPI app, settings, CORS, problem+json errors.
+- [x] SQLAlchemy models and first migration.
+- [x] Services and all routers from `engineering.md` §19.
+- [x] Multipart and zip upload with limits.
+- [x] Seed command, `DEMO_MODE`, `/demo/reset`.
+- [x] `make types` generates TS types.
+- [x] API tests.
 
 **Exit:** upload → analyze → import configs → simulate → compare → validation all work from the API docs page.
 
@@ -115,11 +115,11 @@ flowchart LR
 
 **Goal:** demo beats 3 and 4.
 
-- [ ] 05 Defense: five layer cards, rules editor, training control, sliders, matrix, versions, import/export, live preview.
-- [ ] 06 Simulator: controls, attack flow from real results, funnel, donut with interval and closed form, per-vector and per-email bars.
-- [ ] 07 Compare: result cards, relative reduction, narrative, config diff, layer deltas, per-email table.
-- [ ] What-if debounced simulations (P1).
-- [ ] Recommendations and sensitivity tornado (P1).
+- [x] 05 Defense: five layer cards, rules editor, training control, sliders, matrix, versions, import/export, live preview.
+- [x] 06 Simulator: controls, attack flow from real results, funnel, donut with interval and closed form, per-vector and per-email bars.
+- [x] 07 Compare: result cards, relative reduction, narrative, config diff, layer deltas, per-email table.
+- [x] What-if debounced simulations (P1).
+- [x] Recommendations and sensitivity tornado (P1).
 
 **Exit:** UI numbers equal CLI numbers for the same seed; training change updates residual risk in under 250 ms; comparison sentence correct for the official configs.
 
@@ -148,6 +148,8 @@ flowchart LR
 - [x] Three timed rehearsals.
 
 **Exit:** two consecutive clean rehearsals under 3:00; fresh clone to running demo in under 10 minutes.
+
+`make e2e` rehearses the illustrative harness. `make e2e-app`, with the API and the web app already running, walks the same path on the live product. On the practice set that is 20/20, untrained closed form 9.59%, trained 3.82%, a 60.2% reduction.
 
 ## Cut line
 

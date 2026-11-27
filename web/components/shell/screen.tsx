@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function Screen({
   title,
   purpose,
@@ -8,10 +10,15 @@ export function Screen({
   children: React.ReactNode;
 }) {
   return (
-    <main className="mx-auto w-full max-w-6xl px-6 py-8" data-testid="screen-ready">
-      <h1 data-testid="screen-title" className="text-[1.75rem] leading-9 font-semibold tracking-tight">{title}</h1>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{purpose}</p>
-      <div className="mt-8">{children}</div>
+    <main className="w-full px-5 py-6 lg:px-8" data-testid="screen-ready">
+      <p className="text-xs text-[#949aab]">
+        <Link href="/" className="hover:text-white">Home</Link>
+        <span className="px-1.5">/</span>
+        <span className="text-[#d5d8e2]">{title}</span>
+      </p>
+      <h1 data-testid="screen-title" className="mt-3 text-[1.85rem] leading-none font-semibold tracking-[-0.035em]">{title}</h1>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-[#949aab]">{purpose}</p>
+      <div className="mt-6">{children}</div>
     </main>
   );
 }

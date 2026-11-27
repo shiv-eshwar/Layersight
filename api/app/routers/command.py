@@ -25,7 +25,14 @@ def command(dataset_id: str) -> CommandCenter:
 
 
 def _report(dataset_id: str) -> CommandCenter:
-    report = get_store().command(dataset_id)
+    store = get_store()
+    if store.get(dataset_id) is not None:
+        report = store.command(dataset_id)
+        if report is not None:
+            return report
+    from app.services.live_command import command_for_dataset
+
+    report = command_for_dataset(dataset_id)
     if report is None:
         raise HTTPException(status_code=404, detail=f"No dataset named {dataset_id}.")
     return report

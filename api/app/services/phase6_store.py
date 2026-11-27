@@ -48,6 +48,7 @@ class Phase6Store:
             id="empty", name="Empty workspace", mails=[], before=before, trained=trained
         )
         self._datasets = {dev.id: dev, empty.id: empty}
+        self._persisted: dict[str, Dataset] = {}
 
     def list_datasets(self) -> list[dict[str, object]]:
         return [
@@ -57,6 +58,23 @@ class Phase6Store:
 
     def get(self, dataset_id: str) -> Dataset | None:
         return self._datasets.get(dataset_id)
+
+    def resolve(self, dataset_id: str) -> Dataset | None:
+        found = self._datasets.get(dataset_id)
+        if found is not None:
+            return found
+        cached = self._persisted.get(dataset_id)
+        if cached is not None:
+            return cached
+        loaded = _load_persisted(dataset_id)
+        if loaded is None:
+            return None
+        with self._lock:
+            existing = self._persisted.get(dataset_id)
+            if existing is not None:
+                return existing
+            self._persisted[dataset_id] = loaded
+            return loaded
 
     def command(self, dataset_id: str) -> CommandCenter | None:
         dataset = self.get(dataset_id)
@@ -78,7 +96,7 @@ class Phase6Store:
         return report.model_copy(update={"brands": brands})
 
     def domains(self, dataset_id: str) -> DomainReport | None:
-        dataset = self.get(dataset_id)
+        dataset = self.resolve(dataset_id)
         if dataset is None:
             return None
         return domain_report(dataset.id, dataset.mails, list(dataset.before.org_domains))
@@ -91,7 +109,7 @@ class Phase6Store:
         return check_domain(candidate, extra)
 
     def questions(self, dataset_id: str, n: int, seed: int) -> list[QuizQuestionView] | None:
-        dataset = self.get(dataset_id)
+        dataset = self.resolve(dataset_id)
         if dataset is None:
             return None
         full = generate(dataset.mails, n=n, seed=seed)
@@ -108,7 +126,7 @@ class Phase6Store:
         seed: int,
         record: bool,
     ) -> QuizGrade | None:
-        dataset = self.get(dataset_id)
+        dataset = self.resolve(dataset_id)
         if dataset is None:
             return None
         result = grade(dataset_id, dataset.mails, answers, n=n, seed=seed, record=record)
@@ -118,7 +136,7 @@ class Phase6Store:
         return result
 
     def apply_user_layer(self, dataset_id: str, reset: bool) -> UserLayerUpdate | None:
-        dataset = self.get(dataset_id)
+        dataset = self.resolve(dataset_id)
         if dataset is None:
             return None
         with self._lock:
@@ -182,6 +200,55 @@ class Phase6Store:
             before=before,
             trained=trained,
         )
+
+
+def _load_persisted(dataset_id: str) -> Dataset | None:
+    from sqlalchemy import select
+
+    from app.db import Analysis, Email
+    from app.db import Dataset as DbDataset
+    from app.db import session as open_session
+    from layersight.models import Bundle
+    from layersight.phase6.outlook import load_pair
+    from layersight.phase6.read import read_message
+
+    db = next(open_session())
+    try:
+        row = db.get(DbDataset, dataset_id)
+        if row is None:
+            return None
+        joined = db.execute(
+            select(Email, Analysis)
+            .join(Analysis, Analysis.email_id == Email.id)
+            .where(Email.dataset_id == dataset_id)
+        ).all()
+        before, trained = load_pair(_ROOT / "data" / "test" / "configs")
+        mails: list[ScoredMail] = []
+        for email, analysis_row in joined:
+            bundle = Bundle.model_validate_json(analysis_row.payload)
+            observed = read_message(email.raw_text)
+            sender = bundle.presentation.sender.display_name
+            if bundle.presentation.sender.address:
+                sender = f"{sender} <{bundle.presentation.sender.address}>".strip()
+            mails.append(
+                ScoredMail(
+                    email_id=email.id,
+                    subject=bundle.presentation.subject or email.filename,
+                    sender=sender,
+                    true_label=email.ground_truth,
+                    analysis=bundle.analysis,
+                    observed=observed,
+                )
+            )
+        return Dataset(
+            id=row.id,
+            name=row.name,
+            mails=mails,
+            before=before,
+            trained=trained,
+        )
+    finally:
+        db.close()
 
 
 def _labels(path: Path) -> dict[str, str]:

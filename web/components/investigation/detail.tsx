@@ -59,10 +59,10 @@ export function Investigation({ emailId }: { emailId: string }) {
   const { presentation, analysis } = detail;
   return (
     <div className="flex flex-col gap-8">
-      <header className="flex flex-wrap items-end justify-between gap-6 border-b border-border pb-6">
+      <header className="ls-panel flex flex-wrap items-end justify-between gap-6 p-5">
         <div>
           <p className="text-sm text-muted-foreground">{presentation.subject || detail.filename}</p>
-          <h2 className="mt-2 text-2xl font-semibold">
+          <h2 className="mt-2 text-2xl font-semibold" data-testid="verdict">
             <VerdictText label={analysis.label} />
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -83,7 +83,7 @@ export function Investigation({ emailId }: { emailId: string }) {
         <div className="flex flex-col gap-8">
           <section>
             <h3 className="text-base font-semibold">What to tell the recipient</h3>
-            <ul className="mt-3 flex flex-col gap-2 text-sm leading-6">
+            <ul className="mt-3 flex flex-col gap-2 text-sm leading-6" data-testid="advice">
               {analysis.advice.map((line) => (
                 <li key={line} className="border-l-2 border-intelligence pl-3">
                   {line}
@@ -101,9 +101,9 @@ export function Investigation({ emailId }: { emailId: string }) {
           <section>
             <h3 className="text-base font-semibold">Headers</h3>
             <dl className="mt-3 flex flex-col gap-3 text-sm">
-              <Header label="From" party={presentation.sender} mismatch={presentation.mismatches.some((item) => item.includes("display"))} />
-              <Header label="Reply-To" party={presentation.reply_to} mismatch={presentation.mismatches.some((item) => item.startsWith("Reply-To"))} />
-              <Header label="Return-Path" party={presentation.return_path} mismatch={presentation.mismatches.some((item) => item.startsWith("Return-Path"))} />
+              <Header testId="header-from" label="From" party={presentation.sender} mismatch={presentation.mismatches.some((item) => item.includes("display"))} />
+              <Header testId="header-reply-to" label="Reply-To" party={presentation.reply_to} mismatch={presentation.mismatches.some((item) => item.startsWith("Reply-To"))} />
+              <Header testId="header-return-path" label="Return-Path" party={presentation.return_path} mismatch={presentation.mismatches.some((item) => item.startsWith("Return-Path"))} />
               <div>
                 <dt className="text-muted-foreground">Date</dt>
                 <dd className="font-mono text-[13px]">{presentation.date ?? "No date"}</dd>
@@ -125,7 +125,12 @@ export function Investigation({ emailId }: { emailId: string }) {
             ) : (
               <ul className="mt-3 flex flex-col gap-4">
                 {presentation.links.map((link) => (
-                  <li key={`${link.href}-${link.text}`} className="text-sm">
+                  <li
+                    key={`${link.href}-${link.text}`}
+                    className="text-sm"
+                    data-testid="link-row"
+                    data-deceptive={link.technique && link.technique !== "legitimate" && link.similarity >= 0.8 ? "true" : "false"}
+                  >
                     <p>{link.text || "Link"}</p>
                     <p className="font-mono text-[13px] text-muted-foreground">{link.display_href}</p>
                     {link.similarity >= 0.8 && link.technique && link.technique !== "legitimate" ? (
@@ -166,9 +171,19 @@ export function Investigation({ emailId }: { emailId: string }) {
   );
 }
 
-function Header({ label, party, mismatch }: { label: string; party: Address | null; mismatch: boolean }) {
+function Header({
+  label,
+  party,
+  mismatch,
+  testId,
+}: {
+  label: string;
+  party: Address | null;
+  mismatch: boolean;
+  testId: string;
+}) {
   return (
-    <div>
+    <div data-testid={testId} data-mismatch={mismatch ? "true" : "false"}>
       <dt className="text-muted-foreground">
         {label}
         {mismatch ? <span className="ml-2 text-threat">Mismatch</span> : null}

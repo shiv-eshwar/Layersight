@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { EmptyState } from "@/components/shell/empty-state";
@@ -9,14 +8,15 @@ import { buttonVariants } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
 import { formatCount, formatPct, formatScore, vectorLabel } from "@/lib/format";
 import { loadCommand, type CommandCenter, type Outlook } from "@/lib/phase6";
+import { useWorkspaceDataset } from "@/lib/use-dataset";
 
 export function CommandCenter() {
-  const params = useSearchParams();
-  const dataset = params.get("dataset") || "dev";
+  const dataset = useWorkspaceDataset();
   const [report, setReport] = useState<CommandCenter | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!dataset) return;
     let cancelled = false;
     setReport(null);
     setError(null);
@@ -32,6 +32,9 @@ export function CommandCenter() {
     };
   }, [dataset]);
 
+  if (!dataset) {
+    return <p className="text-sm text-muted-foreground">Loading the dataset.</p>;
+  }
   if (dataset === "empty") {
     return (
       <EmptyState title="No emails loaded" action={<Link href="/triage" className={buttonVariants()}>Upload emails</Link>}>
@@ -163,7 +166,7 @@ export function CommandCenter() {
 
 function Kpi({ label, value, hint, href }: { label: string; value: string; hint?: string; href: string }) {
   return (
-    <Link href={href} className="border border-border bg-card px-4 py-3">
+    <Link href={href} className="border border-white/8 bg-card px-4 py-4">
       <span className="block text-sm text-muted-foreground">{label}</span>
       <span className="mt-1 block font-mono text-2xl">{value}</span>
       {hint ? <span className="mt-1 block text-xs text-muted-foreground">{hint}</span> : null}
@@ -200,13 +203,13 @@ function Donut({ outlook }: { outlook: Outlook }) {
       <p className="mt-1 text-sm text-muted-foreground">Modeled estimate, untrained configuration.</p>
       <div className="mt-4 flex items-center gap-5">
         <svg width="120" height="120" viewBox="0 0 120 120" aria-hidden="true">
-          <circle cx="60" cy="60" r={radius} fill="none" stroke="#24324A" strokeWidth="12" />
+          <circle cx="60" cy="60" r={radius} fill="none" stroke="#2a2e3c" strokeWidth="12" />
           <circle
             cx="60"
             cy="60"
             r={radius}
             fill="none"
-            stroke="#10B981"
+            stroke="#3ddc97"
             strokeWidth="12"
             strokeDasharray={`${circumference - passedLength} ${passedLength}`}
             transform="rotate(-90 60 60)"
@@ -216,7 +219,7 @@ function Donut({ outlook }: { outlook: Outlook }) {
             cy="60"
             r={radius}
             fill="none"
-            stroke="#EF4444"
+            stroke="#ff5c6c"
             strokeWidth="12"
             strokeDasharray={`${passedLength} ${circumference - passedLength}`}
             strokeDashoffset={-(circumference - passedLength)}
@@ -249,7 +252,7 @@ function Funnel({ outlook }: { outlook: Outlook }) {
                 <span className="font-mono">{formatCount(step.entered)}</span>
               </div>
               <div className="mt-1 h-2 bg-background">
-                <div className="h-full" style={{ width: `${width}%`, background: passed ? "#EF4444" : "#24324A" }}>
+                <div className="h-full" style={{ width: `${width}%`, background: passed ? "#ff5c6c" : "#2a2e3c" }}>
                   {passed ? null : <div className="h-full bg-protected" style={{ width: `${stopped}%` }} />}
                 </div>
               </div>

@@ -86,6 +86,9 @@ export interface LayerOutcome {
 
 export interface EmailSimulation {
   email_id: string;
+  id?: string;
+  filename?: string;
+  subject?: string;
   attack_vector: AttackVector;
   layers: LayerOutcome[];
   passed: number;
@@ -131,6 +134,9 @@ export interface EmailComparison {
   pass_rate_a: number;
   pass_rate_b: number;
   absolute_reduction: number;
+  attack_vector?: AttackVector;
+  subject?: string;
+  filename?: string;
 }
 
 export interface ComparisonResult {
@@ -194,14 +200,14 @@ export const LEVEL_LABEL: Record<TrainingLevel, string> = {
 };
 
 export const LAYER_COLOR: Record<LayerName, string> = {
-  email_filter: "#38BDF8",
-  user: "#E6EDF7",
-  application_control: "#F59E0B",
-  antivirus: "#10B981",
-  segmentation: "#8A9BB4",
+  email_filter: "#6d8bff",
+  user: "#8b6cff",
+  application_control: "#2ec8c0",
+  antivirus: "#3ddc97",
+  segmentation: "#ff8a3d",
 };
 
-export const PASSED_COLOR = "#EF4444";
+export const PASSED_COLOR = "#ff5c6c";
 
 export const PREVIEW_ENGINE = "preview";
 

@@ -70,6 +70,33 @@ def list_configs(db: Session) -> list[dict[str, Any]]:
     return [{"id": row.id, "name": row.name} for row in rows]
 
 
+def parse_config(payload: dict[str, Any]) -> LayerConfig:
+    from pydantic import ValidationError
+
+    try:
+        return LayerConfig.model_validate(payload)
+    except ValidationError as exc:
+        fields = [
+            {"field": ".".join(str(part) for part in error["loc"]), "message": error["msg"]}
+            for error in exc.errors()
+        ]
+        raise APIError(
+            422,
+            "Invalid layer configuration",
+            "The configuration does not match the schema.",
+            fields,
+        ) from exc
+
+
+def get_config(db: Session, config_id: str) -> dict[str, Any]:
+    seed_configs(db)
+    row = db.get(ConfigRow, config_id)
+    if row is None:
+        raise APIError(404, "No configuration", "That configuration is not stored.")
+    config = LayerConfig.model_validate_json(row.body)
+    return {"id": row.id, "name": row.name, "config": config.model_dump(mode="json")}
+
+
 def _config(db: Session, config_id: str | None, fallback: str) -> LayerConfig:
     seed_configs(db)
     row = db.get(ConfigRow, config_id) if config_id else None
@@ -472,47 +499,35 @@ def simulate_dataset(
     runs: int = 10000,
     seed: int = 42,
     persist: bool = True,
+    config: LayerConfig | None = None,
+    closed_form_only: bool = False,
 ) -> dict[str, Any]:
-    from layersight import __version__
     from layersight.models import Bundle
     from layersight.simulation.compare import simulate
-    from layersight.simulation.montecarlo import wilson
 
-    config = _config(db, config_id, "untrained")
+    chosen = config if config is not None else _config(db, config_id, "untrained")
     per_email: list[dict[str, Any]] = []
     for email, analysis_row in _joined(db, dataset_id):
         bundle = Bundle.model_validate_json(analysis_row.payload)
         if bundle.analysis.label != "phishing":
             continue
-        simulated = simulate(bundle.analysis, email.sha256, config, runs=runs, seed=seed)
-        item = simulated.model_dump(mode="json")
+        if closed_form_only:
+            item = _closed_form_email(bundle.analysis, chosen, runs)
+        else:
+            simulated = simulate(bundle.analysis, email.sha256, chosen, runs=runs, seed=seed)
+            item = simulated.model_dump(mode="json")
         item["filename"] = email.filename
         item["id"] = email.id
+        item["subject"] = bundle.presentation.subject
         per_email.append(item)
-    closed_values = [float(item["closed_form"]) for item in per_email]
-    rates = [float(item["pass_rate"]) for item in per_email]
-    closed = sum(closed_values) / len(closed_values) if closed_values else 0.0
-    rate = sum(rates) / len(rates) if rates else 0.0
-    passed = sum(int(item["passed"]) for item in per_email)
-    low, high = wilson(passed, max(len(per_email), 1) * runs)
-    body: dict[str, Any] = {
-        "dataset_id": dataset_id,
-        "config_id": config_id or "untrained",
-        "runs": runs,
-        "seed": seed,
-        "engine_version": __version__,
-        "config_snapshot": config.model_dump(mode="json"),
-        "per_email": per_email,
-        "aggregate": {
-            "email_count": len(per_email),
-            "runs": runs,
-            "pass_rate": rate,
-            "blocked_rate": 1.0 - rate,
-            "closed_form": closed,
-            "ci95": [low, high],
-            "layers": _mean_layers(per_email),
-        },
-    }
+    body = _simulation_body(
+        dataset_id,
+        chosen,
+        config_id or ("inline" if config is not None else "untrained"),
+        per_email,
+        runs,
+        seed,
+    )
     if not persist:
         body["id"] = None
         return body
@@ -545,33 +560,43 @@ def load_run(db: Session, run_id: str) -> dict[str, Any]:
 def compare_configs(
     db: Session,
     dataset_id: str,
-    config_a_id: str,
-    config_b_id: str,
+    config_a_id: str | None,
+    config_b_id: str | None,
     *,
     runs: int = 10000,
     seed: int = 42,
+    config_a: LayerConfig | None = None,
+    config_b: LayerConfig | None = None,
 ) -> dict[str, Any]:
     from layersight import __version__
     from layersight.models import Bundle
     from layersight.simulation.compare import compare_email, narrative
 
-    left = _config(db, config_a_id, "untrained")
-    right = _config(db, config_b_id, "trained")
+    left = config_a if config_a is not None else _config(db, config_a_id, "untrained")
+    right = config_b if config_b is not None else _config(db, config_b_id, "trained")
     deltas: list[dict[str, Any]] = []
-    closed_a: list[float] = []
-    closed_b: list[float] = []
+    per_a: list[dict[str, Any]] = []
+    per_b: list[dict[str, Any]] = []
     for email, analysis_row in _joined(db, dataset_id):
         bundle = Bundle.model_validate_json(analysis_row.payload)
         if bundle.analysis.label != "phishing":
             continue
         item = compare_email(bundle.analysis, email.sha256, left, right, runs=runs, seed=seed)
-        closed_a.append(item.baseline.simulation.closed_form)
-        closed_b.append(item.comparison.simulation.closed_form)
+        left_item = item.baseline.simulation.model_dump(mode="json")
+        right_item = item.comparison.simulation.model_dump(mode="json")
+        for side in (left_item, right_item):
+            side["filename"] = email.filename
+            side["id"] = email.id
+            side["subject"] = bundle.presentation.subject
+        per_a.append(left_item)
+        per_b.append(right_item)
         deltas.append(
             {
                 "email_id": email.id,
                 "filename": email.filename,
+                "subject": bundle.presentation.subject,
                 "sha256": email.sha256,
+                "attack_vector": bundle.analysis.attack_vector,
                 "pass_rate_a": item.baseline.simulation.pass_rate,
                 "pass_rate_b": item.comparison.simulation.pass_rate,
                 "closed_form_a": item.baseline.simulation.closed_form,
@@ -580,13 +605,13 @@ def compare_configs(
                 - item.comparison.simulation.closed_form,
             }
         )
-    before = sum(closed_a) / len(closed_a) if closed_a else 0.0
-    after = sum(closed_b) / len(closed_b) if closed_b else 0.0
+    before = _mean_closed(per_a)
+    after = _mean_closed(per_b)
     relative = 0.0 if before <= 0 else (before - after) / before
     body = {
         "dataset_id": dataset_id,
-        "config_a_id": config_a_id,
-        "config_b_id": config_b_id,
+        "config_a_id": config_a_id or "inline",
+        "config_b_id": config_b_id or "inline",
         "config_a_name": left.name,
         "config_b_name": right.name,
         "runs": runs,
@@ -595,7 +620,10 @@ def compare_configs(
         "absolute_reduction": before - after,
         "relative_reduction": relative,
         "narrative": narrative(left, right, before, after),
+        "changes": config_changes(left, right),
         "per_email": deltas,
+        "result_a": _simulation_body(dataset_id, left, config_a_id or "inline", per_a, runs, seed),
+        "result_b": _simulation_body(dataset_id, right, config_b_id or "inline", per_b, runs, seed),
     }
     run_id = str(uuid.uuid4())
     body["id"] = run_id
@@ -613,13 +641,18 @@ def compare_configs(
     return body
 
 
-def recommend_dataset(db: Session, dataset_id: str, config_id: str | None) -> dict[str, Any]:
+def recommend_dataset(
+    db: Session,
+    dataset_id: str,
+    config_id: str | None,
+    config: LayerConfig | None = None,
+) -> dict[str, Any]:
     from layersight.models import Bundle
     from layersight.refs import assumptions
     from layersight.simulation.model import layer_probabilities
     from layersight.simulation.montecarlo import closed_form
 
-    config = _config(db, config_id, "untrained")
+    config = config if config is not None else _config(db, config_id, "untrained")
     analyses = []
     for _email, analysis_row in _joined(db, dataset_id):
         bundle = Bundle.model_validate_json(analysis_row.payload)
@@ -690,6 +723,154 @@ def override_vector(db: Session, email_id: str, attack_vector: str) -> dict[str,
     analysis_row.label = payload["analysis"]["label"]
     db.commit()
     return email_detail(db, email_id, baseline_id=None, comparison_id=None, runs=1000, seed=42)
+
+
+def _mean_closed(per_email: list[dict[str, Any]]) -> float:
+    if not per_email:
+        return 0.0
+    return sum(float(item["closed_form"]) for item in per_email) / len(per_email)
+
+
+def _simulation_body(
+    dataset_id: str,
+    config: LayerConfig,
+    config_id: str,
+    per_email: list[dict[str, Any]],
+    runs: int,
+    seed: int,
+) -> dict[str, Any]:
+    from layersight import __version__
+    from layersight.simulation.montecarlo import wilson
+
+    closed = _mean_closed(per_email)
+    rate = (
+        sum(float(item["pass_rate"]) for item in per_email) / len(per_email) if per_email else 0.0
+    )
+    passed = sum(int(item["passed"]) for item in per_email)
+    low, high = wilson(passed, max(len(per_email), 1) * runs)
+    return {
+        "dataset_id": dataset_id,
+        "config_id": config_id,
+        "runs": runs,
+        "seed": seed,
+        "engine_version": __version__,
+        "config_snapshot": config.model_dump(mode="json"),
+        "per_email": per_email,
+        "aggregate": {
+            "email_count": len(per_email),
+            "runs": runs,
+            "pass_rate": rate,
+            "blocked_rate": 1.0 - rate,
+            "closed_form": closed,
+            "ci95": [low, high],
+            "layers": _mean_layers(per_email),
+        },
+    }
+
+
+def _closed_form_email(analysis: Any, config: LayerConfig, runs: int) -> dict[str, Any]:
+    from layersight.refs import assumptions
+    from layersight.simulation.model import layer_probabilities
+    from layersight.simulation.montecarlo import closed_form
+
+    layers = layer_probabilities(analysis, config, assumptions())
+    form = closed_form([layer.p_stop for layer in layers])
+    entered = runs
+    filled: list[dict[str, Any]] = []
+    for layer in layers:
+        dumped = layer.model_dump(mode="json")
+        if not layer.applicable:
+            dumped["entered"] = 0
+            dumped["stopped"] = 0
+            filled.append(dumped)
+            continue
+        stopped = int(round(entered * layer.p_stop))
+        dumped["entered"] = entered
+        dumped["stopped"] = stopped
+        filled.append(dumped)
+        entered -= stopped
+    return {
+        "email_id": analysis.email_id,
+        "attack_vector": analysis.attack_vector,
+        "layers": filled,
+        "passed": entered,
+        "pass_rate": form,
+        "ci95": [form, form],
+        "closed_form": form,
+    }
+
+
+def _scalar(value: Any) -> Any:
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    return None
+
+
+def config_changes(before: LayerConfig, after: LayerConfig) -> list[dict[str, Any]]:
+    changes: list[dict[str, Any]] = []
+
+    def push(path: str, left: Any, right: Any) -> None:
+        if left == right:
+            return
+        if isinstance(left, float) and isinstance(right, float) and abs(left - right) < 1e-9:
+            return
+        changes.append({"path": path, "before": _scalar(left), "after": _scalar(right)})
+
+    push("name", before.name, after.name)
+    push("org_domains", ",".join(before.org_domains), ",".join(after.org_domains))
+    push(
+        "email_filter.base_catch_rate",
+        before.email_filter.base_catch_rate,
+        after.email_filter.base_catch_rate,
+    )
+    push("user_training.level", before.user_training.level, after.user_training.level)
+    push(
+        "user_training.catch_rate",
+        before.user_training.catch_rate,
+        after.user_training.catch_rate,
+    )
+    push(
+        "application_control.effectiveness",
+        before.application_control.effectiveness,
+        after.application_control.effectiveness,
+    )
+    keys = set(before.application_control.overrides) | set(after.application_control.overrides)
+    for key in sorted(keys):
+        push(
+            f"application_control.overrides.{key}",
+            before.application_control.overrides.get(key),
+            after.application_control.overrides.get(key),
+        )
+    push(
+        "antivirus.detection_rate", before.antivirus.detection_rate, after.antivirus.detection_rate
+    )
+    push(
+        "segmentation.containment_rate",
+        before.segmentation.containment_rate,
+        after.segmentation.containment_rate,
+    )
+    push(
+        "segmentation.applies_to_credential_harvest",
+        before.segmentation.applies_to_credential_harvest,
+        after.segmentation.applies_to_credential_harvest,
+    )
+    before_rules = {rule.id: rule for rule in before.email_filter.rules}
+    after_rules = {rule.id: rule for rule in after.email_filter.rules}
+    for rule_id in sorted(set(before_rules) | set(after_rules)):
+        left = before_rules.get(rule_id)
+        right = after_rules.get(rule_id)
+        if left is None or right is None:
+            changes.append(
+                {
+                    "path": f"email_filter.rules.{rule_id}",
+                    "before": "present" if left else None,
+                    "after": "present" if right else None,
+                }
+            )
+            continue
+        push(f"email_filter.rules.{rule_id}.enabled", left.enabled, right.enabled)
+        push(f"email_filter.rules.{rule_id}.catch_rate", left.catch_rate, right.catch_rate)
+    return changes
 
 
 def _mean_layers(per_email: list[dict[str, Any]]) -> list[dict[str, Any]]:

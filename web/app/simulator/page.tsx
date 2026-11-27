@@ -8,7 +8,7 @@ export default function SimulatorPage() {
   return (
     <Screen
       title="Attack Simulator"
-      purpose="Ten thousand runs of each phishing email in scope, and where those attacks stop. Counts are modeled estimates."
+      purpose="Model how phishing emails flow through your layered defenses and estimate the chance of a successful attack."
     >
       <FlagshipProviders>
         <SimulatorScreen />

@@ -1,17 +1,17 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { ApplicabilityMatrix, FunnelChart } from "@/components/flagship/charts";
-import { ILLUSTRATIVE_ID, selectEmails } from "@/lib/flagship/fixtures";
+import { EmptyState } from "@/components/shell/empty-state";
 import { formatPct, formatRel } from "@/lib/flagship/format";
-import { compare, simulate } from "@/lib/flagship/model";
 import { compareVersion, useFlagship } from "@/lib/flagship/store";
 import { LAYER_LABEL, LEVEL_LABEL, type FilterRule, type TrainingLevel } from "@/lib/flagship/types";
-import { useSimulationPreview } from "@/lib/flagship/use-results";
+import { useComparisonPreview, useSimulationPreview } from "@/lib/flagship/use-results";
+import { useWorkspaceDataset } from "@/lib/use-dataset";
 import { exportConfigYaml, parseConfigYaml } from "@/lib/flagship/yaml-config";
 
 const ruleSchema = z.object({
@@ -73,10 +73,10 @@ function Switch({
       aria-checked={checked}
       aria-label={label}
       onClick={onClick}
-      className={`relative h-6 w-11 rounded-full ${checked ? "bg-[#38BDF8]" : "bg-[#24324A]"}`}
+      className={`relative h-6 w-11 rounded-full ${checked ? "bg-[#8b7cff]" : "bg-[#2a2e3c]"}`}
     >
       <span
-        className={`absolute top-0.5 h-5 w-5 rounded-full bg-[#E6EDF7] transition-transform ${
+        className={`absolute top-0.5 h-5 w-5 rounded-full bg-[#f4f6fb] transition-transform ${
           checked ? "translate-x-5" : "translate-x-0.5"
         }`}
       />
@@ -99,6 +99,7 @@ function matchValue(op: RuleForm["op"], raw: string): FilterRule["match"]["value
 }
 
 export function DefenseScreen() {
+  const datasetId = useWorkspaceDataset();
   const draft = useFlagship((state) => state.draft);
   const versions = useFlagship((state) => state.versions);
   const activeId = useFlagship((state) => state.activeId);
@@ -117,21 +118,20 @@ export function DefenseScreen() {
   const [importErrors, setImportErrors] = useState<{ field: string; message: string }[]>([]);
   const [importWarnings, setImportWarnings] = useState<string[]>([]);
 
-  const illustrative = useMemo(() => selectEmails(ILLUSTRATIVE_ID), []);
   const preview = useSimulationPreview(
     draft,
-    illustrative,
+    datasetId,
     draft.simulation.runs,
     draft.simulation.seed,
+    true,
   );
   const other = useFlagship((state) => compareVersion(state)?.config);
-  const versus = useMemo(() => {
-    if (!other) return null;
-    return compare(illustrative, draft, other, draft.simulation.runs, draft.simulation.seed);
-  }, [draft, other, illustrative]);
-  const wholeSet = useMemo(
-    () => simulate(selectEmails("all"), draft, draft.simulation.runs, draft.simulation.seed),
-    [draft],
+  const versus = useComparisonPreview(
+    draft,
+    other ?? draft,
+    other ? datasetId : null,
+    draft.simulation.runs,
+    draft.simulation.seed,
   );
 
   const form = useForm<RuleForm>({
@@ -164,13 +164,23 @@ export function DefenseScreen() {
     if (parsed.config) replaceDraft(parsed.config);
   }
 
+  if (!datasetId) {
+    return (
+      <EmptyState title="No dataset selected">
+        Load the 20-email test set in Triage. Residual risk is the engine&apos;s closed form for that set.
+      </EmptyState>
+    );
+  }
+
+  const closedForm = preview.result?.aggregate.closed_form;
+
   return (
     <div data-testid="defense-screen">
       <div className="flex flex-wrap items-end justify-end gap-2">
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            className="rounded-md border border-[#24324A] px-3 py-1.5 text-sm"
+            className="rounded-full border border-white/10 bg-black/30 px-3.5 py-1.5 text-sm"
             onClick={() => fileRef.current?.click()}
           >
             Import YAML
@@ -188,14 +198,14 @@ export function DefenseScreen() {
           />
           <button
             type="button"
-            className="rounded-md border border-[#24324A] px-3 py-1.5 text-sm"
+            className="rounded-full border border-white/10 bg-black/30 px-3.5 py-1.5 text-sm"
             onClick={onExport}
           >
             Export YAML
           </button>
           <button
             type="button"
-            className="rounded-md bg-[#38BDF8] px-3 py-1.5 text-sm font-medium text-[#0B1120]"
+            className="rounded-full bg-white px-3.5 py-1.5 text-sm font-medium text-[#101218]"
             onClick={saveVersion}
           >
             Save as new version
@@ -204,16 +214,16 @@ export function DefenseScreen() {
       </div>
 
       {importErrors.length > 0 ? (
-        <ul role="alert" className="mt-4 grid gap-1 rounded-md border border-[#EF4444] p-3 text-sm">
+        <ul role="alert" className="mt-4 grid gap-1 rounded-md border border-[#ff5c6c] p-3 text-sm">
           {importErrors.map((error) => (
             <li key={`${error.field}-${error.message}`}>
-              <span className="ls-mono text-[#EF4444]">{error.field}</span> {error.message}
+              <span className="ls-mono text-[#ff5c6c]">{error.field}</span> {error.message}
             </li>
           ))}
         </ul>
       ) : null}
       {importWarnings.length > 0 ? (
-        <ul className="mt-3 grid gap-1 text-sm text-[#F59E0B]">
+        <ul className="mt-3 grid gap-1 text-sm text-[#ff8a3d]">
           {importWarnings.map((warning) => (
             <li key={warning}>{warning}</li>
           ))}
@@ -253,7 +263,7 @@ export function DefenseScreen() {
 
           <section className="ls-card grid gap-4 p-4" data-testid="layer-email-filter">
             <header>
-              <p className="text-xs text-[#8A9BB4]">1</p>
+              <p className="text-xs text-[#949aab]">1</p>
               <h2 className="text-base font-semibold">{LAYER_LABEL.email_filter}</h2>
             </header>
             <RateField
@@ -268,11 +278,11 @@ export function DefenseScreen() {
             />
             <ul className="grid gap-3">
               {draft.email_filter.rules.map((rule) => (
-                <li key={rule.id} className="grid gap-2 border-t border-[#24324A] pt-3">
+                <li key={rule.id} className="grid gap-2 border-t border-[#2a2e3c] pt-3">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm">{rule.description || rule.id}</p>
-                      <p className="ls-mono text-xs text-[#8A9BB4]">
+                      <p className="ls-mono text-xs text-[#949aab]">
                         {rule.match.feature} {rule.match.op}{" "}
                         {Array.isArray(rule.match.value)
                           ? rule.match.value.join(", ")
@@ -292,7 +302,7 @@ export function DefenseScreen() {
                   />
                   <button
                     type="button"
-                    className="justify-self-start text-sm text-[#8A9BB4]"
+                    className="justify-self-start text-sm text-[#949aab]"
                     onClick={() => removeRule(rule.id)}
                   >
                     Remove rule
@@ -301,7 +311,7 @@ export function DefenseScreen() {
               ))}
             </ul>
             <form
-              className="grid gap-2 border-t border-[#24324A] pt-3"
+              className="grid gap-2 border-t border-[#2a2e3c] pt-3"
               onSubmit={form.handleSubmit((values) => {
                 if (values.op !== "exists" && values.value.trim() === "") {
                   form.setError("value", { message: "Enter the value to match." });
@@ -345,7 +355,7 @@ export function DefenseScreen() {
                   ))}
                 </select>
                 <input placeholder="value" aria-label="Match value" {...form.register("value")} />
-                <label className="text-sm text-[#8A9BB4]">
+                <label className="text-sm text-[#949aab]">
                   Catch rate %
                   <input
                     type="number"
@@ -357,13 +367,13 @@ export function DefenseScreen() {
                 </label>
               </div>
               {Object.values(form.formState.errors).map((error) => (
-                <p key={error.message} role="alert" className="text-sm text-[#EF4444]">
+                <p key={error.message} role="alert" className="text-sm text-[#ff5c6c]">
                   {error.message}
                 </p>
               ))}
               <button
                 type="submit"
-                className="justify-self-start rounded-md border border-[#24324A] px-3 py-1.5 text-sm"
+                className="justify-self-start rounded-full border border-white/10 bg-black/30 px-3.5 py-1.5 text-sm"
               >
                 Add rule
               </button>
@@ -372,7 +382,7 @@ export function DefenseScreen() {
 
           <section className="ls-card grid gap-3 p-4" data-testid="layer-user">
             <header>
-              <p className="text-xs text-[#8A9BB4]">2</p>
+              <p className="text-xs text-[#949aab]">2</p>
               <h2 className="text-base font-semibold">{LAYER_LABEL.user}</h2>
             </header>
             <div className="flex flex-wrap gap-2">
@@ -384,8 +394,8 @@ export function DefenseScreen() {
                     type="button"
                     data-testid={`training-${level}`}
                     aria-pressed={selected}
-                    className={`rounded-md px-3 py-1.5 text-sm ${
-                      selected ? "bg-[#38BDF8] text-[#0B1120]" : "border border-[#24324A]"
+                    className={`rounded-full px-3 py-1.5 text-sm ${
+                      selected ? "bg-white text-[#101218]" : "border border-white/10 text-[#c8cdd8]"
                     }`}
                     onClick={() => setTrainingLevel(level)}
                   >
@@ -401,7 +411,7 @@ export function DefenseScreen() {
             />
             <button
               type="button"
-              className="justify-self-start text-sm text-[#8A9BB4]"
+              className="justify-self-start text-sm text-[#949aab]"
               onClick={() => setCustomCatchRate(null)}
             >
               Use the training-level table
@@ -410,7 +420,7 @@ export function DefenseScreen() {
 
           <section className="ls-card grid gap-3 p-4" data-testid="layer-application">
             <header>
-              <p className="text-xs text-[#8A9BB4]">3</p>
+              <p className="text-xs text-[#949aab]">3</p>
               <h2 className="text-base font-semibold">{LAYER_LABEL.application_control}</h2>
             </header>
             <RateField
@@ -453,7 +463,7 @@ export function DefenseScreen() {
 
           <section className="ls-card grid gap-3 p-4" data-testid="layer-antivirus">
             <header>
-              <p className="text-xs text-[#8A9BB4]">4</p>
+              <p className="text-xs text-[#949aab]">4</p>
               <h2 className="text-base font-semibold">{LAYER_LABEL.antivirus}</h2>
             </header>
             <RateField
@@ -467,7 +477,7 @@ export function DefenseScreen() {
 
           <section className="ls-card grid gap-3 p-4" data-testid="layer-segmentation">
             <header>
-              <p className="text-xs text-[#8A9BB4]">5</p>
+              <p className="text-xs text-[#949aab]">5</p>
               <h2 className="text-base font-semibold">{LAYER_LABEL.segmentation}</h2>
             </header>
             <RateField
@@ -501,28 +511,30 @@ export function DefenseScreen() {
 
         <aside className="grid gap-4 lg:sticky lg:top-28">
           <section className="ls-card p-4" aria-live="polite">
-            <h2 className="text-base font-semibold">Residual risk</h2>
-            <p className="mt-1 text-sm text-[#8A9BB4]">Illustrative malware email · modeled estimate</p>
-            <p className="ls-mono mt-3 text-5xl text-[#EF4444]" data-testid="residual-risk">
-              {formatPct(preview.result.aggregate.closed_form)}
+            <h2 className="text-sm font-semibold">Estimated pass-through</h2>
+            <p className="mt-1 text-sm text-[#949aab]">Probability a phishing attack succeeds through all configured layers.</p>
+            <p className="ls-mono mt-3 text-5xl font-semibold tracking-[-0.04em] text-[#ff5c6c]" data-testid="residual-risk">
+              {closedForm == null ? "—" : formatPct(closedForm)}
             </p>
-            <p className="mt-2 text-sm text-[#8A9BB4]">
-              Across the five phishing emails: {formatPct(wholeSet.aggregate.closed_form)}
+            <p className="mt-2 text-sm text-[#949aab]">
+              {preview.result
+                ? `Across ${preview.result.aggregate.email_count} predicted phishing emails. Modeled estimate.`
+                : "Waiting for the engine."}
             </p>
-            {versus ? (
+            {versus.result ? (
               <p className="mt-2 text-sm">
-                {versus.relative_reduction > 0
-                  ? `${versus.config_b_name} models ${formatPct(versus.result_b.aggregate.closed_form)} on this email, ${formatRel(versus.relative_reduction)} lower.`
-                  : `${versus.config_b_name} models the same ${formatPct(versus.result_b.aggregate.closed_form)} on this email.`}
+                {versus.result.relative_reduction > 0
+                  ? `${versus.result.config_b_name} models ${formatPct(versus.result.result_b.aggregate.closed_form)} on this dataset, ${formatRel(versus.result.relative_reduction)} lower.`
+                  : `${versus.result.config_b_name} models the same ${formatPct(versus.result.result_b.aggregate.closed_form)} on this dataset.`}
               </p>
             ) : null}
-            <p className="mt-2 text-xs text-[#8A9BB4]">
-              {preview.source === "api"
-                ? `Engine ${preview.result.engine_version}`
-                : "Closed-form preview. A seeded run replaces it when the simulation API is available."}
-              {preview.loading ? " Checking the simulation API." : ""}
+            <p className="mt-2 text-xs text-[#949aab]">
+              {preview.result
+                ? `Engine ${preview.result.engine_version}. Closed form, so a training change updates without waiting on Monte Carlo.`
+                : preview.error ?? "Closed form from the engine."}
+              {preview.loading ? " Updating." : ""}
             </p>
-            {dirty ? <p className="mt-2 text-xs text-[#F59E0B]">Unsaved edits</p> : null}
+            {dirty ? <p className="mt-2 text-xs text-[#ff8a3d]">Unsaved edits</p> : null}
           </section>
           <section className="ls-card p-4">
             <h2 className="text-base font-semibold">Versions</h2>
@@ -531,8 +543,8 @@ export function DefenseScreen() {
                 <li key={version.id}>
                   <button
                     type="button"
-                    className={`w-full rounded-md px-2 py-1.5 text-left text-sm ${
-                      version.id === activeId ? "bg-[#0B1120] text-[#38BDF8]" : ""
+                    className={`w-full rounded-xl px-2 py-1.5 text-left text-sm ${
+                      version.id === activeId ? "bg-white/10 text-white" : "text-[#c8cdd8]"
                     }`}
                     onClick={() => loadVersion(version.id)}
                   >
@@ -541,14 +553,14 @@ export function DefenseScreen() {
                 </li>
               ))}
             </ul>
-            <p className="mt-2 text-xs text-[#8A9BB4]">
+            <p className="mt-2 text-xs text-[#949aab]">
               Choosing a version replaces the draft, including unsaved edits.
             </p>
           </section>
         </aside>
       </div>
       <div className="mt-4 grid gap-4">
-        <FunnelChart result={preview.result} />
+        {preview.result ? <FunnelChart result={preview.result} /> : null}
         <ApplicabilityMatrix
           credentialSegmentation={draft.segmentation.applies_to_credential_harvest}
         />
