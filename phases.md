@@ -127,11 +127,11 @@ flowchart LR
 
 **Goal:** all nine screens on real data.
 
-- [ ] 04 Intelligence (P1): design first; domains table, techniques, diff, deceptive links, checker.
-- [ ] 01 Command Center (P1): KPIs, donut, before/after, funnel, top recommendation, top threats, brands.
-- [ ] 08 Academy (P2): generator, endpoints, quiz UI with feedback and score.
-- [ ] Quiz accuracy as user-layer rate (P2).
-- [ ] Uncertainty bands (P2).
+- [x] 04 Intelligence (P1): design first; domains table, techniques, diff, deceptive links, checker.
+- [x] 01 Command Center (P1): KPIs, donut, before/after, funnel, top recommendation, top threats, brands.
+- [x] 08 Academy (P2): generator, endpoints, quiz UI with feedback and score.
+- [x] Quiz accuracy as user-layer rate (P2).
+- [x] Uncertainty bands (P2).
 
 **Exit:** every nav item opens a working, API-backed screen.
 

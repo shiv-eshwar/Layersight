@@ -14,7 +14,7 @@ from email.policy import default as default_policy
 from email.utils import getaddresses
 from html.parser import HTMLParser
 
-from layersight.features.domains import is_ip, registrable_domain
+from layersight.phase6.lookup import registrable_domain
 from layersight.textutil import host_of
 
 _URL = re.compile(r"https?://[^\s<>\"']+", re.IGNORECASE)
@@ -234,7 +234,7 @@ def _attachments(message: object, raw: str) -> list[ObservedAttachment]:
     return found
 
 
-def _add_attachment(found: list[ObservedAttachment], seen: set[str], filename: str, kind: str) -> None:
+def _add_attachment(found: list[ObservedAttachment], seen: set[str], filename: str, kind: str) -> None:  # noqa: E501
     clean = filename.strip().strip('"')
     key = clean.lower()
     if not clean or key in seen:
@@ -267,8 +267,8 @@ def _first(header: str | None) -> tuple[str, str]:
 
 def _reg(address: str) -> str:
     host = host_of(address)
-    if not host or is_ip(host):
-        return host
+    if not host:
+        return ""
     return registrable_domain(host)
 
 

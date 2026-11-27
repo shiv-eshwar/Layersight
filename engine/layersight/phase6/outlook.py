@@ -74,11 +74,13 @@ class Defense:
 
 def load_pair(directory: Path | None = None) -> tuple[Defense, Defense]:
     root = directory or _CONFIGS
-    before = _read_config(root / "untrained.yaml") if (root / "untrained.yaml").is_file() else _bare("Untrained users (v1)", "none")
+    before = _read_config(root / "untrained.yaml") if (root /
+                                                       "untrained.yaml").is_file() else _bare("Untrained users (v1)", "none")  # noqa: E501
     if (root / "trained.yaml").is_file():
         after = _read_config(root / "trained.yaml")
     else:
-        after = _copy(before, name="Trained users (v2)", training_level="advanced", user_catch_rate=None)
+        after = _copy(before, name="Trained users (v2)",
+                      training_level="advanced", user_catch_rate=None)
     return before, after
 
 
@@ -202,7 +204,8 @@ def _mean_entered(curves: list[list[float]], runs: int) -> list[int]:
 
 def _stop_probabilities(analysis: EmailAnalysis, config: Defense) -> list[float]:
     applicable = _applicable(analysis.attack_vector, config)
-    extras = [rule.catch_rate for rule in config.rules if rule.enabled and _matches(rule, analysis.features)]
+    extras = [rule.catch_rate for rule in config.rules if rule.enabled and _matches(
+        rule, analysis.features)]
     filter_p = _noisy_or(config.filter_base, extras) if applicable[0] else 0.0
     user_p = _user_probability(analysis.cue_score, config) if applicable[1] else 0.0
     risk_class = analysis.features.get("attachment.risk_class")
@@ -251,7 +254,7 @@ def _matches(rule: FilterRule, features: dict[str, object]) -> bool:
     if rule.op in {"gte", "lte"} and isinstance(raw, (int, float)) and not isinstance(raw, bool):
         if not isinstance(rule.value, (int, float)):
             return False
-        return float(raw) >= float(rule.value) if rule.op == "gte" else float(raw) <= float(rule.value)
+        return float(raw) >= float(rule.value) if rule.op == "gte" else float(raw) <= float(rule.value)  # noqa: E501
     if rule.op == "contains" and isinstance(raw, str) and isinstance(rule.value, str):
         return rule.value in raw
     return False
@@ -277,30 +280,35 @@ def _recommend(config: Defense, phishing: list[ScoredMail]) -> RecommendationVie
         rule = FilterRule("quarantine_dmarc_fail", "auth.dmarc", "eq", "fail", 0.85)
         changed = _copy(config, rules=config.rules + (rule,))
         candidates.append(
-            _pack("quarantine_dmarc", "email_filter", config, changed, phishing, baseline, "DMARC quarantine")
+            _pack("quarantine_dmarc", "email_filter", config,
+                  changed, phishing, baseline, "DMARC quarantine")
         )
     if not any(rule.feature == "links.max_lookalike_score" for rule in config.rules):
         rule = FilterRule("lookalike_filter", "links.max_lookalike_score", "gte", 0.85, 0.90)
         changed = _copy(config, rules=config.rules + (rule,))
         candidates.append(
-            _pack("lookalike_filter", "email_filter", config, changed, phishing, baseline, "look-alike filter")
+            _pack("lookalike_filter", "email_filter", config,
+                  changed, phishing, baseline, "look-alike filter")
         )
     overrides = dict(config.app_overrides)
     if overrides.get("macro_document", 0.0) < 0.90:
         overrides["macro_document"] = 0.90
         changed = _copy(config, app_overrides=tuple(overrides.items()))
         candidates.append(
-            _pack("block_macros", "application_control", config, changed, phishing, baseline, "macro blocking")
+            _pack("block_macros", "application_control", config,
+                  changed, phishing, baseline, "macro blocking")
         )
     if config.antivirus < 0.98:
         changed = _copy(config, antivirus=min(0.98, config.antivirus + 0.15))
         candidates.append(
-            _pack("better_antivirus", "antivirus", config, changed, phishing, baseline, "endpoint detection")
+            _pack("better_antivirus", "antivirus", config, changed,
+                  phishing, baseline, "endpoint detection")
         )
     if config.segmentation < 0.98:
         changed = _copy(config, segmentation=min(0.98, config.segmentation + 0.20))
         candidates.append(
-            _pack("tighter_segmentation", "segmentation", config, changed, phishing, baseline, "segmentation")
+            _pack("tighter_segmentation", "segmentation", config,
+                  changed, phishing, baseline, "segmentation")
         )
     useful = [item for item in candidates if item[0] > 1e-4]
     if not useful:
@@ -347,7 +355,7 @@ def _pack(
 
 
 def _mean_form(phishing: list[ScoredMail], config: Defense) -> float:
-    return sum(closed_form(_stop_probabilities(mail.analysis, config)) for mail in phishing) / len(phishing)
+    return sum(closed_form(_stop_probabilities(mail.analysis, config)) for mail in phishing) / len(phishing)  # noqa: E501
 
 
 def _threats(mails: list[ScoredMail]) -> list[ThreatRow]:
@@ -417,7 +425,8 @@ def _clamp(value: float) -> float:
 
 
 def _round_half_up(value: float) -> int:
-    return int(math.floor(value + 0.5))
+    # The extra millionth absorbs binary fractions such as 0.65 * 0.70 * 0.75.
+    return int(math.floor(value + 0.5 + 1e-6))
 
 
 def _copy(config: Defense, **changes: object) -> Defense:
@@ -498,7 +507,8 @@ def _read_config(path: Path) -> Defense:
         for key, value in overrides_raw.items()
         if isinstance(overrides_raw, dict)
     ) if isinstance(overrides_raw, dict) else ()
-    orgs = tuple(str(item) for item in raw.get("org_domains", []) if isinstance(raw.get("org_domains"), list))
+    orgs = tuple(str(item) for item in raw.get("org_domains", [])
+                 if isinstance(raw.get("org_domains"), list))
     level = str(user.get("level") or "none") if isinstance(user, dict) else "none"
     catch = user.get("catch_rate") if isinstance(user, dict) else None
     return Defense(
@@ -507,12 +517,15 @@ def _read_config(path: Path) -> Defense:
         filter_base=float(filt.get("base_catch_rate", 0.35)) if isinstance(filt, dict) else 0.35,
         rules=tuple(rules),
         training_level=level,
-        user_catch_rate=float(catch) if isinstance(catch, (int, float)) and not isinstance(catch, bool) else None,
+        user_catch_rate=float(catch) if isinstance(
+            catch, (int, float)) and not isinstance(catch, bool) else None,
         app_effectiveness=float(app.get("effectiveness", 0.25)) if isinstance(app, dict) else 0.25,
         app_overrides=overrides,
-        antivirus=float(antivirus.get("detection_rate", 0.55)) if isinstance(antivirus, dict) else 0.55,
+        antivirus=float(antivirus.get("detection_rate", 0.55)
+                        ) if isinstance(antivirus, dict) else 0.55,
         segmentation=float(seg.get("containment_rate", 0.40)) if isinstance(seg, dict) else 0.40,
-        segmentation_credential=bool(seg.get("applies_to_credential_harvest", True)) if isinstance(seg, dict) else True,
+        segmentation_credential=bool(
+            seg.get("applies_to_credential_harvest", True)) if isinstance(seg, dict) else True,
         runs=int(sim.get("runs", 10_000)) if isinstance(sim, dict) else 10_000,
         seed=int(sim.get("seed", 42)) if isinstance(sim, dict) else 42,
     )

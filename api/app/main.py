@@ -6,6 +6,9 @@ import yaml
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.routers.command import router as command_router
+from app.routers.domains import router as domains_router
+from app.routers.quiz import router as quiz_router
 from app.routes import router
 from app.settings import Settings
 from layersight import __version__
@@ -30,6 +33,9 @@ app.add_middleware(
 )
 
 app.include_router(router)
+app.include_router(command_router, prefix="/api/v1")
+app.include_router(domains_router, prefix="/api/v1")
+app.include_router(quiz_router, prefix="/api/v1")
 
 
 def _assumptions() -> dict[str, object]:

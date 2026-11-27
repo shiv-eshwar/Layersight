@@ -13,10 +13,11 @@ from pathlib import Path
 import yaml
 
 from layersight import __version__
-from layersight.features.domains import SimilarityHit, is_ip, registrable_domain, similarity, split_domain
+from layersight.features.domains import is_ip
 from layersight.models import EmailAnalysis, Evidence
+from layersight.phase6.lookup import Hit, registrable_domain, score, suffix_of
 from layersight.phase6.read import Observation
-from layersight.reference_data import ReferenceData, load_reference
+from layersight.phase6.reference import CorpusRef, load_corpus
 from layersight.scoring.weights import Weights, load_weights
 from layersight.textutil import host_of
 
@@ -66,10 +67,10 @@ def analyze_observation(
     observed: Observation,
     email_id: str,
     org_domains: list[str] | None = None,
-    reference: ReferenceData | None = None,
+    reference: CorpusRef | None = None,
     weights: Weights | None = None,
 ) -> EmailAnalysis:
-    ref = reference or load_reference()
+    ref = reference or load_corpus()
     scale = weights or load_weights()
     org = tuple(registrable_domain(domain) or domain.lower() for domain in (org_domains or []))
     protected = list(ref.brand_domains) + [domain for domain in org if domain]
@@ -121,8 +122,8 @@ def analyze_observation(
 def _lookalikes(
     observed: Observation,
     protected: list[str],
-    ref: ReferenceData,
-) -> list[tuple[str, SimilarityHit]]:
+    ref: CorpusRef,
+) -> list[tuple[str, Hit]]:
     hosts: list[str] = []
     if observed.sender_domain:
         hosts.append(observed.sender_domain)
@@ -134,12 +135,12 @@ def _lookalikes(
             hosts.append(host)
     scored = []
     for host in hosts:
-        hit = similarity(host, protected, ref.homoglyphs)
+        hit = score(host, protected)
         scored.append((host, hit))
     return scored
 
 
-def _headers(observed: Observation, ref: ReferenceData, hits: list[_Hit]) -> None:
+def _headers(observed: Observation, ref: CorpusRef, hits: list[_Hit]) -> None:
     if observed.reply_domain and observed.reply_domain != observed.sender_domain:
         hits.append(
             _Hit(
@@ -147,7 +148,7 @@ def _headers(observed: Observation, ref: ReferenceData, hits: list[_Hit]) -> Non
                 "header",
                 "Reply-To mismatch",
                 (
-                    f"Replies go to {observed.reply_domain}, not {observed.sender_domain or 'the sender'}."
+                    f"Replies go to {observed.reply_domain}, not {observed.sender_domain or 'the sender'}."  # noqa: E501
                 ),
                 "Reply-To",
                 1.5,
@@ -161,7 +162,7 @@ def _headers(observed: Observation, ref: ReferenceData, hits: list[_Hit]) -> Non
                 "H02",
                 "header",
                 "Display name impersonates a brand",
-                f"The name says {claimed}, but the address is {observed.sender_domain or 'unknown'}.",
+                f"The name says {claimed}, but the address is {observed.sender_domain or 'unknown'}.",  # noqa: E501
                 "From",
                 1.5,
                 True,
@@ -187,7 +188,7 @@ def _headers(observed: Observation, ref: ReferenceData, hits: list[_Hit]) -> Non
                 "H04",
                 "header",
                 "Free-mail account claiming a role",
-                f"{observed.sender_address or observed.sender_domain} is free mail, not the organization.",
+                f"{observed.sender_address or observed.sender_domain} is free mail, not the organization.",  # noqa: E501
                 "From",
                 1.0,
                 True,
@@ -195,7 +196,7 @@ def _headers(observed: Observation, ref: ReferenceData, hits: list[_Hit]) -> Non
         )
 
 
-def _claimed_brand(display: str, sender_domain: str, ref: ReferenceData) -> str | None:
+def _claimed_brand(display: str, sender_domain: str, ref: CorpusRef) -> str | None:
     folded = display.casefold()
     if not folded:
         return None
@@ -247,8 +248,8 @@ def _auth(observed: Observation, scale: Weights, hits: list[_Hit]) -> None:
 def _links(
     observed: Observation,
     lookalikes: list[tuple[str, object]],
-    best: tuple[str, SimilarityHit] | None,
-    ref: ReferenceData,
+    best: tuple[str, Hit] | None,
+    ref: CorpusRef,
     scale: Weights,
     hits: list[_Hit],
 ) -> None:
@@ -286,15 +287,18 @@ def _links(
     hosts = [host_of(href) for _text, href in observed.links]
     if any(is_ip(host) for host in hosts if host):
         hits.append(
-            _Hit("L03", "link", "IP-address link", "A link uses a raw IP address.", "link", scale.rule("L03"), True)
+            _Hit("L03", "link", "IP-address link",
+                 "A link uses a raw IP address.", "link", scale.rule("L03"), True)
         )
     if any(hit.idn for _host, hit in lookalikes):
         hits.append(
-            _Hit("L04", "domain", "Punycode or IDN host", "A domain uses internationalized characters.", "domain", scale.rule("L04"), True)
+            _Hit("L04", "domain", "Punycode or IDN host",
+                 "A domain uses internationalized characters.", "domain", scale.rule("L04"), True)
         )
     if any(registrable_domain(host) in ref.shorteners for host in hosts if host):
         hits.append(
-            _Hit("L05", "link", "URL shortener", "A link goes through a shortener.", "link", scale.rule("L05"), True)
+            _Hit("L05", "link", "URL shortener", "A link goes through a shortener.",
+                 "link", scale.rule("L05"), True)
         )
     if _brand_buried(observed, ref):
         hits.append(
@@ -310,11 +314,13 @@ def _links(
         )
     if any(_suspicious_suffix(host, ref) for host in hosts if host):
         hits.append(
-            _Hit("L07", "domain", "Suspicious TLD", "A link uses a TLD often seen in phishing.", "link", scale.rule("L07"), True)
+            _Hit("L07", "domain", "Suspicious TLD",
+                 "A link uses a TLD often seen in phishing.", "link", scale.rule("L07"), True)
         )
     if _plain_http_login(observed):
         hits.append(
-            _Hit("L08", "link", "Plain HTTP login link", "A login link is not protected by HTTPS.", "link", scale.rule("L08"), True)
+            _Hit("L08", "link", "Plain HTTP login link",
+                 "A login link is not protected by HTTPS.", "link", scale.rule("L08"), True)
         )
     unrelated = [
         registrable_domain(host)
@@ -346,7 +352,7 @@ def _deceptive(observed: Observation) -> tuple[str, str, str] | None:
     return None
 
 
-def _brand_buried(observed: Observation, ref: ReferenceData) -> bool:
+def _brand_buried(observed: Observation, ref: CorpusRef) -> bool:
     labels = {
         domain.split(".")[0]
         for domain in ref.brand_domains
@@ -372,8 +378,8 @@ def _plain_http_login(observed: Observation) -> bool:
     return False
 
 
-def _suspicious_suffix(host: str, ref: ReferenceData) -> bool:
-    _label, suffix = split_domain(host)
+def _suspicious_suffix(host: str, ref: CorpusRef) -> bool:
+    suffix = suffix_of(host)
     if not suffix:
         return False
     last = suffix.split(".")[-1]
@@ -388,7 +394,7 @@ def _content(body: str, hits: list[_Hit]) -> dict[str, bool]:
         "C02": ("Credential request", 1.2, "The message asks for an account or password action."),
         "C03": ("Payment request", 1.2, "The message asks for money or new payment details."),
         "C04": ("Generic greeting", 0.4, "The greeting does not use the recipient's name."),
-        "C05": ("Threat of loss", 0.6, "The message threatens a locked, suspended, or deleted account."),
+        "C05": ("Threat of loss", 0.6, "The message threatens a locked, suspended, or deleted account."),  # noqa: E501
     }
     folded = body.casefold()
     for rule_id, options in phrases.items():
@@ -417,8 +423,10 @@ def _attachments(
 ) -> tuple[str | None, bool]:
     if not observed.attachments:
         return None, False
-    order = ["executable", "script", "macro_document", "html", "archive", "document", "image", "other"]
-    chosen = min(observed.attachments, key=lambda item: order.index(item.risk_class) if item.risk_class in order else 99)
+    order = ["executable", "script", "macro_document",
+             "html", "archive", "document", "image", "other"]
+    chosen = min(observed.attachments, key=lambda item: order.index(
+        item.risk_class) if item.risk_class in order else 99)
     password = bool(_PASSWORD.search(observed.body)) and chosen.risk_class == "archive"
     if chosen.risk_class in {"executable", "script"}:
         hits.append(
@@ -446,16 +454,19 @@ def _attachments(
         )
     if chosen.risk_class == "macro_document":
         hits.append(
-            _Hit("T03", "attachment", "Macro-enabled document", f"{chosen.filename} can run macros.", chosen.filename, scale.rule("T03"), True)
+            _Hit("T03", "attachment", "Macro-enabled document",
+                 f"{chosen.filename} can run macros.", chosen.filename, scale.rule("T03"), True)
         )
     if chosen.risk_class == "archive":
         points = scale.rule("T04") + (scale.bonus.get("T04_password", 0.0) if password else 0.0)
         hits.append(
-            _Hit("T04", "attachment", "Archive attachment", f"{chosen.filename} is an archive.", chosen.filename, points, True)
+            _Hit("T04", "attachment", "Archive attachment",
+                 f"{chosen.filename} is an archive.", chosen.filename, points, True)
         )
     if chosen.risk_class == "html":
         hits.append(
-            _Hit("T05", "attachment", "HTML attachment", f"{chosen.filename} is an HTML file.", chosen.filename, scale.rule("T05"), True)
+            _Hit("T05", "attachment", "HTML attachment",
+                 f"{chosen.filename} is an HTML file.", chosen.filename, scale.rule("T05"), True)
         )
     return chosen.risk_class, password
 
@@ -563,6 +574,6 @@ def _advice(evidence: list[Evidence], label: str) -> list[str]:
         chosen.append("Report it with the Report Phish button, then delete it.")
     elif not chosen:
         chosen.append(
-            "No strong warning signs. Still confirm unexpected requests for money or credentials through a separate channel."
+            "No strong warning signs. Still confirm unexpected requests for money or credentials through a separate channel."  # noqa: E501
         )
     return chosen

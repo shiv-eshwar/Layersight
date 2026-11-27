@@ -6,7 +6,7 @@ import hashlib
 import random
 import re
 
-from layersight.features.domains import registrable_domain
+from layersight.phase6.lookup import registrable_domain
 from layersight.phase6.models import AnswerIn, AnswerResult, QuizGrade, QuizOption, QuizQuestion
 from layersight.phase6.records import ScoredMail
 from layersight.textutil import host_of
@@ -136,7 +136,7 @@ def _verdict_question(mail: ScoredMail, verdict: str) -> QuizQuestion:
 
 
 def _suspicious_question(mail: ScoredMail, seed: int) -> QuizQuestion | None:
-    visible = [item for item in mail.analysis.evidence if item.user_visible and item.contribution > 0]
+    visible = [item for item in mail.analysis.evidence if item.user_visible and item.contribution > 0]  # noqa: E501
     if not visible:
         return None
     winner = max(visible, key=lambda item: item.contribution)
@@ -173,7 +173,7 @@ def _link_question(mail: ScoredMail, seed: int) -> QuizQuestion | None:
             if shown and shown != real:
                 options.append(QuizOption(id="shown", text=shown))
                 break
-        if mail.observed.sender_domain and all(option.text != mail.observed.sender_domain for option in options):
+        if mail.observed.sender_domain and all(option.text != mail.observed.sender_domain for option in options):  # noqa: E501
             options.append(QuizOption(id="sender", text=mail.observed.sender_domain))
         options.append(QuizOption(id="none", text="The message does not contain a link"))
         trimmed = options[:4]

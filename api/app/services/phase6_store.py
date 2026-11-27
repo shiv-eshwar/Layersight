@@ -44,7 +44,9 @@ class Phase6Store:
         base = root or _ROOT
         before, trained = load_pair(base / "data" / "dev" / "configs")
         dev = self._load_dev(base, before, trained)
-        empty = Dataset(id="empty", name="Empty workspace", mails=[], before=before, trained=trained)
+        empty = Dataset(
+            id="empty", name="Empty workspace", mails=[], before=before, trained=trained
+        )
         self._datasets = {dev.id: dev, empty.id: empty}
 
     def list_datasets(self) -> list[dict[str, object]]:
@@ -94,7 +96,8 @@ class Phase6Store:
             return None
         full = generate(dataset.mails, n=n, seed=seed)
         return [
-            QuizQuestionView(**item.model_dump(exclude={"answer_id", "explanation"})) for item in full
+            QuizQuestionView(**item.model_dump(exclude={"answer_id", "explanation"}))
+            for item in full
         ]
 
     def grade(
