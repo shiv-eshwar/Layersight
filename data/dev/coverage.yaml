@@ -1,0 +1,41 @@
+# Which development email exercises which scoring rule.
+rules:
+  H01: [d01-reply.eml]
+  H02: [d02-display.eml]
+  H03: [d03-return-path.eml]
+  H04: [d04-freemail.eml]
+  A01: [d05-spf.eml, d36-softfail.eml]
+  A02: [d06-dkim.eml]
+  A03: [d07-dmarc.eml]
+  A04: [d31-reset.eml, d38-compromised.eml]
+  L01: [d08-link-text.eml]
+  L02: [d09-homoglyph.eml, d28-typosquat.eml]
+  L03: [d10-ip.eml]
+  L04: [d11-puny.eml]
+  L05: [d12-short.eml, d32-newsletter.eml]
+  L06: [d13-brand-path.eml, d30-subdomain.eml]
+  L07: [d14-tld.eml, d27-tld-swap.eml]
+  L08: [d15-http.eml]
+  L09: [d16-unrelated.eml]
+  C01: [d17-urgency.eml]
+  C02: [d18-credential.eml]
+  C03: [d19-payment.eml]
+  C04: [d20-greeting.eml]
+  C05: [d21-threat.eml]
+  T01: [d22-exe.eml]
+  T02: [d23-double.eml]
+  T03: [d24-macro.eml]
+  T04: [d25-archive.eml]
+  T05: [d26-html-file.eml]
+  G01: [d31-reset.eml, d34-maintenance.eml, d37-benefits.eml]
+  G02: [d35-shipping.eml, d37-benefits.eml]
+hard_positives:
+  - d30-subdomain.eml
+  - d19-payment.eml
+  - d38-compromised.eml
+hard_negatives:
+  - d31-reset.eml
+  - d32-newsletter.eml
+  - d33-pdf.eml
+  - d34-maintenance.eml
+  - d35-shipping.eml

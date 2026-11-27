@@ -1,0 +1,25 @@
+# Cheap or frequently abused suffixes. The last label of the public suffix is compared.
+suspicious:
+  - xyz
+  - top
+  - click
+  - link
+  - buzz
+  - rest
+  - country
+  - gq
+  - ml
+  - cf
+  - tk
+  - ga
+  - work
+  - zip
+  - mov
+  - cam
+  - quest
+  - bond
+  - icu
+  - cfd
+  - sbs
+  - lol
+  - monster

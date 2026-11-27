@@ -1,0 +1,98 @@
+.ls-mono {
+  font-family: var(--font-jetbrains), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.ls-card {
+  background: #172334;
+  border: 1px solid #24324a;
+  border-radius: 6px;
+}
+
+.ls input[type="range"] {
+  width: 100%;
+  accent-color: #38bdf8;
+}
+
+.ls select,
+.ls input[type="text"],
+.ls input[type="number"] {
+  background: #0b1120;
+  color: #e6edf7;
+  border: 1px solid #24324a;
+  border-radius: 6px;
+  padding: 0.35rem 0.55rem;
+}
+
+.ls :focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
+}
+
+.attack-stage {
+  position: relative;
+  height: 11.5rem;
+}
+
+.attack-particle {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: #10b981;
+  animation-duration: 2.6s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.attack-particle[data-passed="false"] {
+  animation-name: attack-drop;
+}
+
+.attack-particle[data-passed="true"] {
+  background: #ef4444;
+  animation-name: attack-through;
+}
+
+@keyframes attack-drop {
+  0% {
+    left: 0%;
+    top: 36%;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  70% {
+    left: var(--stop);
+    top: 36%;
+    opacity: 1;
+  }
+  100% {
+    left: var(--stop);
+    top: 78%;
+    opacity: 0;
+  }
+}
+
+@keyframes attack-through {
+  0% {
+    left: 0%;
+    top: 36%;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    left: 96%;
+    top: 36%;
+    opacity: 0.9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .attack-particle {
+    display: none;
+  }
+}

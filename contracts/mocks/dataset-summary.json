@@ -1,0 +1,11 @@
+{
+  "dataset_id": "dev",
+  "name": "Development corpus",
+  "email_count": 36,
+  "phishing_count": null,
+  "genuine_count": null,
+  "accuracy": null,
+  "pass_rate_before": null,
+  "pass_rate_after": null,
+  "relative_reduction": null
+}

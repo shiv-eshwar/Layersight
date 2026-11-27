@@ -1,0 +1,10 @@
+{
+  "layer": "email_filter",
+  "applicable": true,
+  "p_stop": 0.35,
+  "reasons": [
+    "Base catch rate 0.35."
+  ],
+  "entered": 10000,
+  "stopped": 3500
+}

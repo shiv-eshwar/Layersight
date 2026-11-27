@@ -1,0 +1,69 @@
+[project]
+name = "layersight-workspace"
+version = "0.1.0"
+description = "LayerSight phishing triage and layered-defense simulator"
+requires-python = ">=3.12"
+dependencies = [
+    "layersight",
+    "layersight-api",
+]
+
+[tool.uv.sources]
+layersight = { workspace = true }
+layersight-api = { workspace = true }
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["engine", "api"]
+
+[dependency-groups]
+dev = ["hypothesis>=6.122", "pytest>=8.3", "ruff>=0.8", "mypy>=1.13"]
+
+[tool.pytest.ini_options]
+testpaths = [
+    "engine/tests/test_contracts.py",
+    "engine/tests/test_corpus.py",
+    "engine/tests/test_reference.py",
+    "engine/tests/test_simulation.py",
+    "api/tests",
+]
+pythonpath = ["api"]
+markers = ["validation: accuracy gate on the labeled test set"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["engine", "api"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"engine/tests/test_rules.py" = ["E501"]
+"scripts/build_dev_corpus.py" = ["E501"]
+
+# Phase 0 gate. The analysis and simulation modules are in the tree and are
+# typechecked with the engine once they settle.
+[tool.mypy]
+python_version = "3.12"
+files = [
+    "api",
+    "engine/tests/test_contracts.py",
+    "engine/tests/test_corpus.py",
+    "engine/tests/test_reference.py",
+    "engine/layersight/__init__.py",
+    "engine/layersight/models.py",
+    "engine/layersight/config/schema.py",
+    "engine/layersight/refs.py",
+]
+mypy_path = "engine:api"
+warn_return_any = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = ["tldextract.*", "rapidfuzz.*", "bs4.*"]
+ignore_missing_imports = true

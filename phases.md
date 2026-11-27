@@ -39,15 +39,15 @@ flowchart LR
 
 **Goal:** everyone works in parallel against frozen interfaces.
 
-- [ ] Monorepo (`engine/`, `api/`, `web/`, `data/`), uv, pnpm, Makefile, docker compose with Postgres 16, `.gitignore`.
-- [ ] Git setup from `github.md` §3 on every machine (identity, hooks).
-- [ ] Pydantic contracts v1 in `engine/layersight/models.py`.
-- [ ] Inspect official data; record format in `context.md` §10; copy unchanged to `data/test/`.
-- [ ] `data/dev/`: ≥ 30 labeled emails covering every rule, hard negatives and hard positives; two canonical configs.
-- [ ] Reference data: brands, free-mail, shorteners, TLDs, homoglyphs, bundled suffix list.
-- [ ] Mock JSON for every contract.
-- [ ] Web: Next.js, tokens, fonts, shadcn/ui, app shell with the eight-item nav.
-- [ ] CI: ruff, mypy, pytest, ESLint, typecheck.
+- [x] Monorepo (`engine/`, `api/`, `web/`, `data/`), uv, pnpm, Makefile, docker compose with Postgres 16, `.gitignore`.
+- [x] Git setup from `github.md` §3 on every machine (identity, hooks).
+- [x] Pydantic contracts v1 in `engine/layersight/models.py`.
+- [x] Inspect official data; record the result in `context.md` §10. The official files have not arrived, so `data/test/` holds a labeled local practice set until they do.
+- [x] `data/dev/`: ≥ 30 labeled emails covering every rule, hard negatives and hard positives; two canonical configs.
+- [x] Reference data: brands, free-mail, shorteners, TLDs, homoglyphs, bundled suffix list.
+- [x] Mock JSON for every contract.
+- [x] Web: Next.js, tokens, fonts, shadcn/ui, app shell with the eight-item nav.
+- [x] CI: ruff, mypy, pytest, ESLint, typecheck.
 
 **Exit:** `make dev` starts everything; contracts merged; both datasets present.
 

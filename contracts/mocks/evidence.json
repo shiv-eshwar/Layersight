@@ -1,0 +1,9 @@
+{
+  "rule_id": "H01",
+  "category": "header",
+  "title": "Reply-To mismatch",
+  "detail": "Replies go to ms-account-verify.com, not microsoft.com.",
+  "location": "Reply-To",
+  "contribution": 1.5,
+  "user_visible": false
+}

@@ -1,0 +1,26 @@
+default_org_domains: [company.com]
+user_clamp: [0.02, 0.98]
+antivirus_password_archive_factor: 0.5
+user_training:
+  none: {base: 0.30, sensitivity: 0.10}
+  basic: {base: 0.55, sensitivity: 0.25}
+  advanced: {base: 0.75, sensitivity: 0.35}
+cue_weights:
+  generic_greeting: 1.0
+  urgency: 1.0
+  threat: 1.0
+  link_mismatch: 1.5
+  misspelled_domain: 1.5
+  unexpected_attachment: 1.5
+  credential_or_payment: 1.5
+statements:
+  - title: What a pass-through rate is
+    body: The chance a phishing email reaches its goal after every layer that can see that kind of attack. It is a model estimate, not a measurement of your network.
+  - title: Layer independence
+    body: Given an email, each layer is assumed to stop the attack on its own. Attacks that beat several layers at once are a known limitation.
+  - title: What each layer can see
+    body: Antivirus and application control apply to malware only. They do not apply to credential theft or payment fraud. Segmentation applies to malware, and to credential theft only when that option is on. Payment fraud is stopped by the filter and the person, or it is not stopped.
+  - title: User catch rate
+    body: Training sets a base rate (none 30%, basic 55%, advanced 75%). Visible warning signs move that rate. People cannot see SPF, DKIM, or DMARC, so authentication does not change the user rate.
+  - title: Classification
+    body: The risk score is a logistic function of weighted evidence. The bias and the weights are in weights.yaml. A score of 0.50 or higher is labeled phishing.

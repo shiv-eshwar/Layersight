@@ -1,0 +1,25 @@
+# Case-insensitive, word boundaries, one hit per rule per email.
+C01:
+  - within 24 hours
+  - immediately
+  - final notice
+C02:
+  - verify your account
+  - confirm your password
+  - re-enter your password
+  - confirm your credentials
+C03:
+  - wire transfer
+  - wire the payment
+  - new bank details
+  - gift cards
+  - gift card
+C04:
+  - dear user
+  - dear customer
+  - dear account holder
+  - dear valued customer
+C05:
+  - suspended
+  - locked
+  - deleted

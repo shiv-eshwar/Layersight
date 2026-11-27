@@ -1,0 +1,10 @@
+From: Microsoft <security@microsoft.com>
+To: Ada Lopez <ada@company.com>
+Subject: Account notice
+Date: Tue, 24 Nov 2026 10:00:00 +0000
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Reply-To: A <a@ms-account-verify.com>
+Authentication-Results: mx.example.net; spf=fail smtp.mailfrom=ms-account-verify.com; dkim=fail header.d=ms-account-verify.com; dmarc=fail header.from=ms-account-verify.com
+
+Verify your account within 24 hours.

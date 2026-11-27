@@ -1,0 +1,10 @@
+From: IT Helpdesk <it@company.com>
+To: Ada Lopez <ada@company.com>
+Subject: Password confirmation
+Date: Tue, 24 Nov 2026 10:00:00 +0000
+MIME-Version: 1.0
+Content-Type: text/html; charset=utf-8
+Reply-To: IT Helpdesk <it@company.com>
+Authentication-Results: mx.example.net; spf=pass smtp.mailfrom=company.com; dkim=pass header.d=company.com; dmarc=pass header.from=company.com
+
+<html><body><p>Dear user, your account will be suspended within 24 hours. Verify your account and confirm your password.</p><p><a href="https://company.com/password-reset">https://company.com/password-reset</a></p></body></html>

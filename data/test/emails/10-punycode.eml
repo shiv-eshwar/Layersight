@@ -1,0 +1,9 @@
+From: PayPal <service@xn--pypal-4ve.com>
+To: Ada Lopez <ada@company.com>
+Subject: PayPal security check
+Date: Tue, 24 Nov 2026 10:00:00 +0000
+MIME-Version: 1.0
+Content-Type: text/html; charset=utf-8
+Authentication-Results: mx.example.net; spf=fail smtp.mailfrom=xn--pypal-4ve.com; dkim=fail header.d=xn--pypal-4ve.com; dmarc=fail header.from=xn--pypal-4ve.com
+
+<html><body><p>Verify your account.</p><p><a href="https://xn--pypal-4ve.com/signin">https://paypal.com/signin</a></p></body></html>

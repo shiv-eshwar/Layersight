@@ -1,0 +1,9 @@
+From: Security <security@login-alert.net>
+To: Ada Lopez <ada@company.com>
+Subject: Account notice
+Date: Tue, 24 Nov 2026 10:00:00 +0000
+MIME-Version: 1.0
+Content-Type: text/html; charset=utf-8
+Authentication-Results: mx.example.net; spf=fail smtp.mailfrom=login-alert.net; dkim=fail header.d=login-alert.net; dmarc=fail header.from=login-alert.net
+
+<html><body><p>Verify your account within 24 hours.</p><p><a href="http://micros0ft.com/login">https://microsoft.com/login</a></p></body></html>

@@ -1,0 +1,9 @@
+From: PayPal Security <noreply@secure-login.io>
+To: Ada Lopez <ada@company.com>
+Subject: PayPal sign-in
+Date: Tue, 24 Nov 2026 10:00:00 +0000
+MIME-Version: 1.0
+Content-Type: text/html; charset=utf-8
+Authentication-Results: mx.example.net; spf=fail smtp.mailfrom=secure-login.io; dkim=fail header.d=secure-login.io; dmarc=fail header.from=secure-login.io
+
+<html><body><p>Verify your account.</p><p><a href="http://paypal.com.secure-login.io/signin">https://www.paypal.com/signin</a></p></body></html>

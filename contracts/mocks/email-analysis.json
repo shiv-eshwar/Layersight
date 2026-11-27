@@ -1,0 +1,51 @@
+{
+  "email_id": "email_01",
+  "risk_score": 0.96,
+  "label": "phishing",
+  "band": "critical",
+  "attack_vector": "credential_harvest",
+  "vector_reason": "The message asks the recipient to sign in and the link imitates Microsoft.",
+  "evidence": [
+    {
+      "rule_id": "H01",
+      "category": "header",
+      "title": "Reply-To mismatch",
+      "detail": "Replies go to ms-account-verify.com, not microsoft.com.",
+      "location": "Reply-To",
+      "contribution": 1.5,
+      "user_visible": false
+    },
+    {
+      "rule_id": "A03",
+      "category": "auth",
+      "title": "DMARC failed",
+      "detail": "microsoft.com did not authenticate this message.",
+      "location": "Authentication-Results",
+      "contribution": 2.0,
+      "user_visible": false
+    },
+    {
+      "rule_id": "L02",
+      "category": "domain",
+      "title": "Look-alike domain",
+      "detail": "micros0ft-login.com imitates microsoft.com (homoglyph, 0.98).",
+      "location": "link #1 href",
+      "contribution": 2.45,
+      "user_visible": true
+    }
+  ],
+  "advice": [
+    "Replies would go to ms-account-verify.com, not microsoft.com. Don't reply; contact the sender through a channel you already know.",
+    "The link goes to micros0ft-login.com, which imitates microsoft.com. Don't click it. Type microsoft.com into your browser instead.",
+    "Report it with the Report Phish button, then delete it."
+  ],
+  "cue_score": 0.72,
+  "features": {
+    "auth.dmarc": "fail",
+    "header.reply_to_mismatch": true,
+    "links.max_lookalike_score": 0.98,
+    "content.credential_request": true
+  },
+  "engine_version": "0.1.0",
+  "weights_hash": "0000000000000000"
+}

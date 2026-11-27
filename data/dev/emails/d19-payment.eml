@@ -1,0 +1,9 @@
+From: "CFO Office" <cfo@ledger-mail.com>
+To: Ada Lopez <ada@company.com>
+Subject: Account notice
+Date: Tue, 24 Nov 2026 10:00:00 +0000
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Authentication-Results: mx.example.net; spf=fail smtp.mailfrom=ledger-mail.com; dkim=fail header.d=ledger-mail.com; dmarc=fail header.from=ledger-mail.com
+
+Wire the payment to the new bank details.

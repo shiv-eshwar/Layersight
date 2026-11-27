@@ -1,0 +1,11 @@
+From: Notes <notes@harbor-letter.com>
+To: Ada Lopez <ada@company.com>
+Subject: Account notice
+Date: Tue, 24 Nov 2026 10:00:00 +0000
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Authentication-Results: mx.example.net; spf=fail smtp.mailfrom=harbor-letter.com; dkim=fail header.d=harbor-letter.com; dmarc=fail header.from=harbor-letter.com
+
+Verify your account.
+
+https://other-portal.test/enter

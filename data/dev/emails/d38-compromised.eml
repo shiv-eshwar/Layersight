@@ -1,0 +1,11 @@
+From: IT Helpdesk <it@company.com>
+To: Ada Lopez <ada@company.com>
+Subject: Confirm
+Date: Tue, 24 Nov 2026 10:00:00 +0000
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Authentication-Results: mx.example.net; spf=pass smtp.mailfrom=company.com; dkim=pass header.d=company.com; dmarc=pass header.from=company.com
+
+Dear user, your account will be suspended within 24 hours. Verify your account and confirm your password.
+
+https://company.com/confirm

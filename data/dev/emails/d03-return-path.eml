@@ -1,0 +1,10 @@
+From: IT <it@company.com>
+To: Ada Lopez <ada@company.com>
+Subject: Account notice
+Date: Tue, 24 Nov 2026 10:00:00 +0000
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Return-Path: <bounce@other-mail.test>
+Authentication-Results: mx.example.net; spf=fail smtp.mailfrom=other-mail.test; dkim=fail header.d=other-mail.test; dmarc=fail header.from=other-mail.test
+
+Verify your account.

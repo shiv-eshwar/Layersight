@@ -1,0 +1,12 @@
+{
+  "type": "https://layersight.local/problems/invalid-config",
+  "title": "Configuration could not be read",
+  "status": 422,
+  "detail": "user_training.level must be none, basic, or advanced.",
+  "errors": [
+    {
+      "field": "user_training.level",
+      "message": "Input should be 'none', 'basic', or 'advanced'."
+    }
+  ]
+}

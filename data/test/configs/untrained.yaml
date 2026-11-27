@@ -1,0 +1,30 @@
+schema_version: 1
+name: Untrained users (v1)
+org_domains: ["company.com"]
+email_filter:
+  base_catch_rate: 0.35
+  rules:
+    - id: quarantine_dmarc_fail
+      description: Quarantine messages that fail DMARC
+      match: {feature: auth.dmarc, op: eq, value: fail}
+      catch_rate: 0.85
+      enabled: true
+    - id: block_executables
+      description: Block executable and script attachments
+      match: {feature: attachment.risk_class, op: in, value: [executable, script]}
+      catch_rate: 0.98
+      enabled: true
+user_training:
+  level: none
+  catch_rate: null
+application_control:
+  effectiveness: 0.25
+  overrides: {macro_document: 0.90, executable: 0.95}
+antivirus:
+  detection_rate: 0.55
+segmentation:
+  containment_rate: 0.40
+  applies_to_credential_harvest: true
+simulation:
+  runs: 10000
+  seed: 42

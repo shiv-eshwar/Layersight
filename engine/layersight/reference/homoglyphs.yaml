@@ -1,0 +1,29 @@
+# Confusable map. Single characters and multi-character sequences, applied before comparison.
+characters:
+  "0": "o"
+  "1": "l"
+  "3": "e"
+  "5": "s"
+  "4": "a"
+  "7": "t"
+  "@": "a"
+  "$": "s"
+  "ο": "o"
+  "о": "o"
+  "а": "a"
+  "е": "e"
+  "р": "p"
+  "с": "c"
+  "х": "x"
+  "у": "y"
+  "і": "i"
+  "ѕ": "s"
+  "һ": "h"
+  "ԁ": "d"
+sequences:
+  - from: rn
+    to: m
+  - from: vv
+    to: w
+  - from: cl
+    to: d

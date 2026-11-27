@@ -1,0 +1,63 @@
+# Log-odds points from engineering.md §4. Tuned values stay in this file, not in code.
+bias: -2.0
+threshold: 0.5
+bands:
+  critical: 0.85
+  high: 0.70
+  suspicious: 0.50
+rules:
+  H01: 1.5
+  H02: 1.5
+  H03: 0.8
+  H04: 1.0
+  A01: 1.5
+  A01_softfail: 0.8
+  A02: 1.2
+  A02_none: 0.4
+  A03: 2.0
+  A04: -0.8
+  L01: 2.0
+  L02: 2.5
+  L03: 1.5
+  L04: 1.5
+  L05: 0.7
+  L06: 1.5
+  L07: 0.6
+  L08: 0.5
+  L09: 0.5
+  C01: 0.8
+  C02: 2.7
+  C03: 1.2
+  C04: 0.4
+  C05: 0.6
+  T01: 2.5
+  T02: 2.5
+  T03: 1.5
+  T04: 0.8
+  T04_password: 0.5
+  T05: 1.2
+  G01: -0.6
+  G02: -0.5
+# Graded results contribute these points instead of the full rule weight.
+graded:
+  A01:
+    softfail: 0.8
+  A02:
+    none: 0.4
+    neutral: 0.4
+    temperror: 0.4
+bonus:
+  T04_password: 0.5
+cue:
+  C01: 1.0
+  C02: 1.2
+  C03: 1.2
+  C04: 0.8
+  C05: 1.0
+  L01: 1.2
+  L02: 1.2
+  T01: 1.0
+  T02: 1.0
+  T03: 1.0
+  T04: 0.8
+  T05: 0.8

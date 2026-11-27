@@ -1,0 +1,51 @@
+{
+  "message_id": "<01@mail.example>",
+  "from": {
+    "display_name": "Microsoft Account Team",
+    "address": "security@microsoft.com",
+    "domain": "microsoft.com",
+    "registrable_domain": "microsoft.com"
+  },
+  "reply_to": [
+    {
+      "display_name": "",
+      "address": "support@ms-account-verify.com",
+      "domain": "ms-account-verify.com",
+      "registrable_domain": "ms-account-verify.com"
+    }
+  ],
+  "return_path": {
+    "display_name": "",
+    "address": "bounce@ms-account-verify.com",
+    "domain": "ms-account-verify.com",
+    "registrable_domain": "ms-account-verify.com"
+  },
+  "to": [
+    {
+      "display_name": "Alex Rivera",
+      "address": "alex.rivera@contoso.example",
+      "domain": "contoso.example",
+      "registrable_domain": "contoso.example"
+    }
+  ],
+  "subject": "Action required: verify your account",
+  "date": "2026-11-14T10:24:00Z",
+  "auth": {
+    "spf": "fail",
+    "dkim": "fail",
+    "dmarc": "fail",
+    "header_from": "microsoft.com",
+    "smtp_mailfrom": "ms-account-verify.com"
+  },
+  "links": [
+    {
+      "text": "https://microsoft.com/verify",
+      "href": "http://micros0ft-login.com/verify",
+      "source": "html"
+    }
+  ],
+  "attachments": [],
+  "body_text": "Dear user, your account will be locked in 24 hours. Verify at https://microsoft.com/verify.",
+  "body_text_sanitized": "Dear user, your account will be locked in 24 hours. Verify at hxxp://micros0ft-login[.]com/verify.",
+  "parse_warnings": []
+}

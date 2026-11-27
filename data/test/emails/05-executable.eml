@@ -1,0 +1,10 @@
+From: Billing <billing@northwind-supply.com>
+To: Ada Lopez <ada@company.com>
+Subject: Invoice attached
+Date: Tue, 24 Nov 2026 10:00:00 +0000
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Open the invoice immediately.
+
+Attachment: invoice.pdf.exe (application/x-msdownload)

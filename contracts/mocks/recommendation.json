@@ -1,0 +1,13 @@
+{
+  "id": "raise_training",
+  "title": "Advance user training",
+  "detail": "Moving from no training to advanced training is the largest modeled reduction for this mix, because several emails carry no malware for antivirus to see.",
+  "layer": "user",
+  "absolute_reduction": 0.0592,
+  "relative_reduction": 0.643,
+  "vectors_helped": [
+    "credential_harvest",
+    "payment_fraud",
+    "malware_attachment"
+  ]
+}

@@ -126,6 +126,7 @@ Use the numbers the engine produces on the official data, not the illustrative 9
 | 2026-11-27 | Vector-aware layer applicability | Antivirus and app control don't stop credential theft | — |
 | 2026-11-27 | Common random numbers for comparisons | Fair before/after | — |
 | 2026-11-27 | Git hooks enforce shiv-eshwar as sole author and committer | Contributor rule in `github.md` | — |
+| 2026-11-27 | Credential weight 2.7; A04 -0.8; G01 -0.6 | Authenticated mail that asks for a password and sets a deadline was still under 0.50. "Reset your password" stays off the credential list so a normal intranet note does not fire C02 | Dev corpus 38/38 |
 
 ## 12. Open questions
 

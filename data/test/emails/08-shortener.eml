@@ -1,0 +1,11 @@
+From: Helpdesk <help@desk-notify.com>
+To: Ada Lopez <ada@company.com>
+Subject: Portal check
+Date: Tue, 24 Nov 2026 10:00:00 +0000
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Authentication-Results: mx.example.net; spf=fail smtp.mailfrom=desk-notify.com; dkim=fail header.d=desk-notify.com; dmarc=fail header.from=desk-notify.com
+
+Dear user, verify your account.
+
+https://bit.ly/acme-login

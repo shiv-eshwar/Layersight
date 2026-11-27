@@ -1,0 +1,366 @@
+{
+  "config_a_name": "Untrained users (v1)",
+  "config_b_name": "Trained users (v2)",
+  "result_a": {
+    "config_snapshot": {
+      "schema_version": 1,
+      "name": "Untrained users (v1)",
+      "org_domains": [
+        "contoso.example"
+      ],
+      "email_filter": {
+        "base_catch_rate": 0.35,
+        "rules": [
+          {
+            "id": "quarantine_dmarc_fail",
+            "description": "Quarantine messages that fail DMARC",
+            "match": {
+              "feature": "auth.dmarc",
+              "op": "eq",
+              "value": "fail"
+            },
+            "catch_rate": 0.85,
+            "enabled": true
+          },
+          {
+            "id": "block_executables",
+            "description": "Block executable and script attachments",
+            "match": {
+              "feature": "attachment.risk_class",
+              "op": "in",
+              "value": [
+                "executable",
+                "script"
+              ]
+            },
+            "catch_rate": 0.98,
+            "enabled": true
+          }
+        ]
+      },
+      "user_training": {
+        "level": "none",
+        "catch_rate": null
+      },
+      "application_control": {
+        "effectiveness": 0.25,
+        "overrides": {
+          "macro_document": 0.9,
+          "executable": 0.95
+        }
+      },
+      "antivirus": {
+        "detection_rate": 0.55
+      },
+      "segmentation": {
+        "containment_rate": 0.4,
+        "applies_to_credential_harvest": true
+      },
+      "simulation": {
+        "runs": 10000,
+        "seed": 42
+      }
+    },
+    "runs": 10000,
+    "seed": 42,
+    "per_email": [
+      {
+        "email_id": "email_01",
+        "attack_vector": "malware_attachment",
+        "layers": [
+          {
+            "layer": "email_filter",
+            "applicable": true,
+            "p_stop": 0.35,
+            "reasons": [
+              "Base catch rate 0.35."
+            ],
+            "entered": 10000,
+            "stopped": 3500
+          },
+          {
+            "layer": "user",
+            "applicable": true,
+            "p_stop": 0.3,
+            "reasons": [
+              "Training level none, base catch rate 0.30."
+            ],
+            "entered": 6500,
+            "stopped": 1950
+          },
+          {
+            "layer": "application_control",
+            "applicable": true,
+            "p_stop": 0.25,
+            "reasons": [
+              "Effectiveness 0.25."
+            ],
+            "entered": 4550,
+            "stopped": 1137
+          },
+          {
+            "layer": "antivirus",
+            "applicable": true,
+            "p_stop": 0.55,
+            "reasons": [
+              "Detection rate 0.55."
+            ],
+            "entered": 3413,
+            "stopped": 1877
+          },
+          {
+            "layer": "segmentation",
+            "applicable": true,
+            "p_stop": 0.4,
+            "reasons": [
+              "Containment rate 0.40."
+            ],
+            "entered": 1536,
+            "stopped": 615
+          }
+        ],
+        "passed": 921,
+        "pass_rate": 0.0921,
+        "ci95": [
+          0.0866,
+          0.098
+        ],
+        "closed_form": 0.092137
+      }
+    ],
+    "aggregate": {
+      "email_count": 1,
+      "runs": 10000,
+      "pass_rate": 0.0921,
+      "blocked_rate": 0.9079,
+      "ci95": [
+        0.0866,
+        0.098
+      ],
+      "closed_form": 0.092138,
+      "layers": [
+        {
+          "layer": "email_filter",
+          "entered": 10000,
+          "stopped": 3500,
+          "applicable_emails": 1
+        },
+        {
+          "layer": "user",
+          "entered": 6500,
+          "stopped": 1950,
+          "applicable_emails": 1
+        },
+        {
+          "layer": "application_control",
+          "entered": 4550,
+          "stopped": 1137,
+          "applicable_emails": 1
+        },
+        {
+          "layer": "antivirus",
+          "entered": 3413,
+          "stopped": 1877,
+          "applicable_emails": 1
+        },
+        {
+          "layer": "segmentation",
+          "entered": 1536,
+          "stopped": 615,
+          "applicable_emails": 1
+        }
+      ]
+    },
+    "engine_version": "0.1.0"
+  },
+  "result_b": {
+    "config_snapshot": {
+      "schema_version": 1,
+      "name": "Trained users (v2)",
+      "org_domains": [
+        "contoso.example"
+      ],
+      "email_filter": {
+        "base_catch_rate": 0.35,
+        "rules": [
+          {
+            "id": "quarantine_dmarc_fail",
+            "description": "Quarantine messages that fail DMARC",
+            "match": {
+              "feature": "auth.dmarc",
+              "op": "eq",
+              "value": "fail"
+            },
+            "catch_rate": 0.85,
+            "enabled": true
+          },
+          {
+            "id": "block_executables",
+            "description": "Block executable and script attachments",
+            "match": {
+              "feature": "attachment.risk_class",
+              "op": "in",
+              "value": [
+                "executable",
+                "script"
+              ]
+            },
+            "catch_rate": 0.98,
+            "enabled": true
+          }
+        ]
+      },
+      "user_training": {
+        "level": "advanced",
+        "catch_rate": null
+      },
+      "application_control": {
+        "effectiveness": 0.25,
+        "overrides": {
+          "macro_document": 0.9,
+          "executable": 0.95
+        }
+      },
+      "antivirus": {
+        "detection_rate": 0.55
+      },
+      "segmentation": {
+        "containment_rate": 0.4,
+        "applies_to_credential_harvest": true
+      },
+      "simulation": {
+        "runs": 10000,
+        "seed": 42
+      }
+    },
+    "runs": 10000,
+    "seed": 42,
+    "per_email": [
+      {
+        "email_id": "email_01",
+        "attack_vector": "malware_attachment",
+        "layers": [
+          {
+            "layer": "email_filter",
+            "applicable": true,
+            "p_stop": 0.35,
+            "reasons": [
+              "Base catch rate 0.35."
+            ],
+            "entered": 10000,
+            "stopped": 3500
+          },
+          {
+            "layer": "user",
+            "applicable": true,
+            "p_stop": 0.75,
+            "reasons": [
+              "Training level advanced, base catch rate 0.75."
+            ],
+            "entered": 6500,
+            "stopped": 4875
+          },
+          {
+            "layer": "application_control",
+            "applicable": true,
+            "p_stop": 0.25,
+            "reasons": [
+              "Effectiveness 0.25."
+            ],
+            "entered": 1625,
+            "stopped": 406
+          },
+          {
+            "layer": "antivirus",
+            "applicable": true,
+            "p_stop": 0.55,
+            "reasons": [
+              "Detection rate 0.55."
+            ],
+            "entered": 1219,
+            "stopped": 670
+          },
+          {
+            "layer": "segmentation",
+            "applicable": true,
+            "p_stop": 0.4,
+            "reasons": [
+              "Containment rate 0.40."
+            ],
+            "entered": 549,
+            "stopped": 220
+          }
+        ],
+        "passed": 329,
+        "pass_rate": 0.0329,
+        "ci95": [
+          0.0295,
+          0.0366
+        ],
+        "closed_form": 0.032906
+      }
+    ],
+    "aggregate": {
+      "email_count": 1,
+      "runs": 10000,
+      "pass_rate": 0.0329,
+      "blocked_rate": 0.9671,
+      "ci95": [
+        0.0295,
+        0.0366
+      ],
+      "closed_form": 0.032906,
+      "layers": [
+        {
+          "layer": "email_filter",
+          "entered": 10000,
+          "stopped": 3500,
+          "applicable_emails": 1
+        },
+        {
+          "layer": "user",
+          "entered": 6500,
+          "stopped": 4875,
+          "applicable_emails": 1
+        },
+        {
+          "layer": "application_control",
+          "entered": 1625,
+          "stopped": 406,
+          "applicable_emails": 1
+        },
+        {
+          "layer": "antivirus",
+          "entered": 1219,
+          "stopped": 670,
+          "applicable_emails": 1
+        },
+        {
+          "layer": "segmentation",
+          "entered": 549,
+          "stopped": 220,
+          "applicable_emails": 1
+        }
+      ]
+    },
+    "engine_version": "0.1.0"
+  },
+  "absolute_reduction": 0.0592,
+  "relative_reduction": 0.643,
+  "narrative": "Improving user training from none to advanced, with all other controls unchanged, reduces the modeled chance an attack passes every layer from 9.21% to 3.29%, a 64.3% reduction.",
+  "changes": [
+    {
+      "path": "user_training.level",
+      "before": "none",
+      "after": "advanced"
+    }
+  ],
+  "per_email": [
+    {
+      "email_id": "email_01",
+      "pass_rate_a": 0.0921,
+      "pass_rate_b": 0.0329,
+      "absolute_reduction": 0.0592
+    }
+  ]
+}

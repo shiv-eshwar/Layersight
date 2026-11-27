@@ -1,0 +1,11 @@
+From: Microsoft Account Team <security@microsoft.com>
+To: Ada Lopez <ada@company.com>
+Subject: Your mailbox will be suspended
+Date: Tue, 24 Nov 2026 10:00:00 +0000
+MIME-Version: 1.0
+Content-Type: text/html; charset=utf-8
+Reply-To: Support <support@ms-account-verify.com>
+Return-Path: <bounce@ms-account-verify.com>
+Authentication-Results: mx.example.net; spf=fail smtp.mailfrom=ms-account-verify.com; dkim=fail header.d=ms-account-verify.com; dmarc=fail header.from=ms-account-verify.com
+
+<html><body><p>Dear user, verify your account within 24 hours or it will be suspended.</p><p><a href="http://micros0ft.com/login">https://microsoft.com/login</a></p></body></html>

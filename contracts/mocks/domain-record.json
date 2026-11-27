@@ -1,0 +1,10 @@
+{
+  "domain": "micros0ft-login.com",
+  "closest_brand": "microsoft.com",
+  "similarity": 0.98,
+  "technique": "homoglyph",
+  "occurrences": 1,
+  "email_ids": [
+    "email_01"
+  ]
+}

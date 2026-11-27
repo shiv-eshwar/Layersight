@@ -1,0 +1,31 @@
+{
+  "total": 20,
+  "actual_phishing": 12,
+  "actual_genuine": 8,
+  "correct": 18,
+  "accuracy": 0.9,
+  "precision": 0.9167,
+  "recall": 0.9167,
+  "f1": 0.9167,
+  "false_positive_rate": 0.125,
+  "false_negative_rate": 0.0833,
+  "confusion": {
+    "true_phishing_pred_phishing": 11,
+    "true_phishing_pred_genuine": 1,
+    "true_genuine_pred_phishing": 1,
+    "true_genuine_pred_genuine": 7
+  },
+  "rows": [
+    {
+      "email_id": "email_01",
+      "filename": "01-reply-to-mismatch.eml",
+      "actual": "phishing",
+      "predicted": "phishing",
+      "risk_score": 0.96,
+      "correct": true,
+      "top_evidence": "DMARC failed"
+    }
+  ],
+  "engine_version": "0.1.0",
+  "weights_hash": "0000000000000000"
+}

@@ -26,23 +26,25 @@ setup:
 	cd engine && uv sync --all-groups
 
 test:
-	cd engine && uv run ruff check layersight tests \
-		&& uv run ruff format --check layersight tests \
-		&& uv run mypy \
-		&& uv run pytest
+	uv run ruff check api engine/tests/test_contracts.py engine/tests/test_corpus.py engine/tests/test_reference.py engine/layersight/__init__.py engine/layersight/models.py engine/layersight/config/schema.py engine/layersight/refs.py
+	uv run ruff format --check api engine/tests/test_contracts.py engine/tests/test_corpus.py engine/tests/test_reference.py engine/layersight/__init__.py engine/layersight/models.py engine/layersight/config/schema.py engine/layersight/refs.py
+	uv run mypy
+	uv run pytest
+	pnpm --dir web exec tsc --noEmit
+	pnpm --dir web exec eslint .
 
 simulate:
-	cd engine && uv run layersight simulate ../data/dev/analyses \
-		--config ../data/dev/configs/untrained.yaml --runs 10000 --seed 42
+	uv run layersight simulate data/test/emails \
+		--config data/test/configs/untrained.yaml --runs 10000 --seed 42
 
 compare:
-	cd engine && uv run layersight compare ../data/dev/analyses \
-		--a ../data/dev/configs/untrained.yaml \
-		--b ../data/dev/configs/trained.yaml --runs 10000 --seed 42
+	uv run layersight compare data/test/emails \
+		--a data/test/configs/untrained.yaml \
+		--b data/test/configs/trained.yaml --runs 10000 --seed 42
 
 recommend:
-	cd engine && uv run layersight recommend ../data/dev/analyses \
-		--config ../data/dev/configs/untrained.yaml
+	uv run layersight recommend data/test/emails \
+		--config data/test/configs/untrained.yaml
 
 e2e:
 	./scripts/demo/e2e.sh

@@ -1,0 +1,22 @@
+{
+  "id": "q1",
+  "email_id": "email_01",
+  "kind": "most_suspicious",
+  "prompt": "Which part of this email is the strongest warning sign?",
+  "options": [
+    {
+      "id": "a",
+      "text": "The greeting is generic"
+    },
+    {
+      "id": "b",
+      "text": "The link goes to micros0ft-login.com"
+    },
+    {
+      "id": "c",
+      "text": "The message was sent on a Thursday"
+    }
+  ],
+  "answer_id": "b",
+  "explanation": "The visible link text says microsoft.com, but the address is micros0ft-login.com. That look-alike domain is the strongest sign."
+}
