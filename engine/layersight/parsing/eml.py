@@ -160,10 +160,10 @@ def parse_email(raw: str) -> ParsedEmail:
         deduped = []
         seen_files: set[tuple[str, str]] = set()
         for item in attachments:
-            key = (item.filename.lower(), item.content_type.lower())
-            if key in seen_files:
+            file_key = (item.filename.lower(), item.content_type.lower())
+            if file_key in seen_files:
                 continue
-            seen_files.add(key)
+            seen_files.add(file_key)
             deduped.append(item)
         return ParsedEmail(
             subject=str(message.get("subject") or ""),

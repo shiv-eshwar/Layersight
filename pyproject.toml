@@ -27,6 +27,11 @@ testpaths = [
     "engine/tests/test_corpus.py",
     "engine/tests/test_reference.py",
     "engine/tests/test_simulation.py",
+    "engine/tests/test_parser.py",
+    "engine/tests/test_rules.py",
+    "engine/tests/test_domains.py",
+    "engine/tests/test_analysis.py",
+    "engine/tests/test_validation.py",
     "api/tests",
 ]
 pythonpath = ["api"]

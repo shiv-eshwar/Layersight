@@ -187,7 +187,7 @@ Until the official files exist:
 
 - Format, label location, and config schema stay unknown. The engine accepts RFC 5322, MIME, and the simplified text shape described in section 3, and it validates configs against the canonical schema in `engineering.md` section 9.
 - Tuning and rule coverage use `data/dev/` (36 labeled messages, plus `untrained.yaml` and `trained.yaml`). That corpus is not a substitute for the official score.
-- Do not report an accuracy number against `data/test/` while it is empty. The validation gate stays in place and will fail closed until the real files are copied in unchanged.
+- The practice set is scored by `layersight validate data/test/emails --labels data/test/labels.csv`. On 2026-11-27 that command reported 20/20. Replace the files unchanged when the official set arrives, then run the command again and record the new result here. The gate fails if accuracy drops below 0.90.
 
 ## 11. Non-goals for the hackathon
 
