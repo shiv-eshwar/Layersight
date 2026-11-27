@@ -1,8 +1,7 @@
-import Link from "next/link";
+import { Suspense } from "react";
 
-import { EmptyState } from "@/components/shell/empty-state";
+import { Investigation } from "@/components/investigation/detail";
 import { Screen } from "@/components/shell/screen";
-import { buttonVariants } from "@/components/ui/button";
 
 export const metadata = { title: "Threat Investigation" };
 
@@ -17,17 +16,9 @@ export default async function InvestigationPage({
       title="Threat Investigation"
       purpose="The risk score, the headers, the authentication results, and the evidence behind them."
     >
-      <EmptyState
-        title="This email has not been analyzed"
-        action={
-          <Link href="/triage" className={buttonVariants({ variant: "outline" })}>
-            Back to triage
-          </Link>
-        }
-      >
-        There is no analysis for <span className="font-mono text-foreground">{id}</span>. Open an
-        email from a classified set and the evidence will be listed here.
-      </EmptyState>
+      <Suspense fallback={<p className="text-sm text-muted-foreground">Opening the analysis…</p>}>
+        <Investigation emailId={id} />
+      </Suspense>
     </Screen>
   );
 }

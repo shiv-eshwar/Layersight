@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+
 import { Screen } from "@/components/shell/screen";
 import { TriageInbox } from "@/components/triage/inbox";
 
@@ -9,7 +11,9 @@ export default function TriagePage() {
       title="Email Triage"
       purpose="Bring emails in, then sort them by risk once the engine has classified them."
     >
-      <TriageInbox />
+      <Suspense fallback={<p className="text-sm text-muted-foreground">Loading triage…</p>}>
+        <TriageInbox />
+      </Suspense>
     </Screen>
   );
 }

@@ -6,9 +6,9 @@ Hackathon problem 1-18, Phishing Triage and Layered Defense Simulator. The produ
 
 ## What runs today
 
-Phase 0 is in place: the repository layout, the frozen data contracts, reference lists, a 36-email development corpus, a small API, and the web application shell. Parsing, scoring, and simulation are not implemented yet. The API serves health and the model's stated assumptions. The web shell does not classify mail.
+The engine classifies mail and estimates how far an attack gets through five defense layers. The API stores an upload, imports layer configs, simulates, compares two configs, and reports validation. Open http://localhost:8000/docs and follow that order, or `POST /api/v1/demo/reset` to reload the practice set.
 
-The official 20-email test set has not been delivered. It will go in `data/test/` unchanged. Practice mail is in `data/dev/`.
+`data/test/` is a local practice set (20 messages, both configs), not the official drop. `data/dev/` is the tuning corpus. When the official files arrive, replace `data/test/` byte for byte.
 
 ## Setup
 

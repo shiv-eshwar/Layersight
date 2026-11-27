@@ -7,7 +7,7 @@ from collections.abc import Iterator
 from datetime import datetime
 from pathlib import Path
 
-from sqlalchemy import DateTime, Float, ForeignKey, String, Text, create_engine
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -29,7 +29,9 @@ class Dataset(Base):
 class Email(Base):
     __tablename__ = "email"
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    dataset_id: Mapped[str] = mapped_column(ForeignKey("dataset.id", ondelete="CASCADE"), index=True)
+    dataset_id: Mapped[str] = mapped_column(
+        ForeignKey("dataset.id", ondelete="CASCADE"), index=True
+    )
     filename: Mapped[str] = mapped_column(String(300))
     sha256: Mapped[str] = mapped_column(String(64))
     raw_text: Mapped[str] = mapped_column(Text)
@@ -51,6 +53,16 @@ class ConfigRow(Base):
     __tablename__ = "layer_config"
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     name: Mapped[str] = mapped_column(String(200))
+    body: Mapped[str] = mapped_column(Text)
+
+
+class RunRow(Base):
+    __tablename__ = "simulation_run"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    dataset_id: Mapped[str] = mapped_column(String(36), index=True)
+    kind: Mapped[str] = mapped_column(String(32))
+    runs: Mapped[int] = mapped_column(Integer)
+    seed: Mapped[int] = mapped_column(Integer)
     body: Mapped[str] = mapped_column(Text)
 
 

@@ -48,6 +48,7 @@ select = ["E", "F", "I", "UP"]
 [tool.ruff.lint.per-file-ignores]
 "engine/tests/test_rules.py" = ["E501"]
 "scripts/build_dev_corpus.py" = ["E501"]
+"api/**/*.py" = ["E501"]
 
 # Phase 0 gate. The analysis and simulation modules are in the tree and are
 # typechecked with the engine once they settle.

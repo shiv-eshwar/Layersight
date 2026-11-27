@@ -102,12 +102,12 @@ flowchart LR
 
 **Goal:** demo beats 1, 2 and 5 in the browser. 4a (shell and components on mocks) starts right after phase 0.
 
-- [ ] Top bar: dataset, config pair, assumptions drawer.
-- [ ] Components: RiskScore, band badge, AuthBadge, EvidenceItem, DomainDiff, empty/loading/error states.
-- [ ] 02 Triage: dropzone, tabs with counts, search, sort, table, row → investigation.
-- [ ] 03 Investigation: verdict, headers with mismatch highlights, auth badges, evidence breakdown, links, attachments, sanitized body, advice, before/after outlook.
-- [ ] 09 Reports: KPIs, confusion matrix, metrics, per-email table, misclassifications, reproducibility footer, JSON/CSV export, print stylesheet.
-- [ ] Replace mocks with the generated client.
+- [x] Top bar: dataset, config pair, assumptions drawer.
+- [x] Components: RiskScore, band badge, AuthBadge, EvidenceItem, DomainDiff, empty/loading/error states.
+- [x] 02 Triage: dropzone, tabs with counts, search, sort, table, row → investigation.
+- [x] 03 Investigation: verdict, headers with mismatch highlights, auth badges, evidence breakdown, links, attachments, sanitized body, advice, before/after outlook.
+- [x] 09 Reports: KPIs, confusion matrix, metrics, per-email table, misclassifications, reproducibility footer, JSON/CSV export, print stylesheet.
+- [x] Replace mocks with the generated client.
 
 **Exit:** a new user uploads 20 emails, understands any verdict, sees ≥ 18/20 on Reports.
 

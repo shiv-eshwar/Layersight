@@ -14,13 +14,12 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.db import Analysis, ConfigRow, Dataset, Email, RunRow, ensure_db
 from layersight.config.adapter import load_config
 from layersight.config.schema import LayerConfig
 from layersight.scoring.analyze import analyze_email
 from layersight.simulation.compare import compare_dataset, compare_email
 from layersight.validation.metrics import validate_messages
-
-from app.db import Analysis, ConfigRow, Dataset, Email, ensure_db
 
 MAX_FILES = 200
 MAX_FILE = 2 * 1024 * 1024
@@ -28,7 +27,9 @@ MAX_REQUEST = 20 * 1024 * 1024
 
 
 class APIError(Exception):
-    def __init__(self, status: int, title: str, detail: str, fields: list[dict[str, str]] | None = None) -> None:
+    def __init__(
+        self, status: int, title: str, detail: str, fields: list[dict[str, str]] | None = None
+    ) -> None:
         super().__init__(detail)
         self.status = status
         self.title = title
@@ -49,7 +50,13 @@ def seed_configs(db: Session) -> None:
     if not any(folder.glob("*.yaml")):
         folder = root / "data" / "dev" / "configs"
     for path in sorted(folder.glob("*.yaml")):
-        config_id = "untrained" if "untrained" in path.name else "trained" if "trained" in path.name else path.stem
+        config_id = (
+            "untrained"
+            if "untrained" in path.name
+            else "trained"
+            if "trained" in path.name
+            else path.stem
+        )
         if db.get(ConfigRow, config_id) is not None:
             continue
         config, _warnings = load_config(path)
@@ -76,7 +83,9 @@ def _config(db: Session, config_id: str | None, fallback: str) -> LayerConfig:
     return LayerConfig.model_validate_json(row.body)
 
 
-def _pair(db: Session, baseline_id: str | None, comparison_id: str | None) -> tuple[LayerConfig, LayerConfig]:
+def _pair(
+    db: Session, baseline_id: str | None, comparison_id: str | None
+) -> tuple[LayerConfig, LayerConfig]:
     return _config(db, baseline_id, "untrained"), _config(db, comparison_id, "trained")
 
 
@@ -135,7 +144,12 @@ def ingest(
         )
         stored += 1
     if stored == 0:
-        raise APIError(400, "Nothing stored", "Every file was empty, too large, or a duplicate.", [{"field": "files", "message": "; ".join(warnings)}])
+        raise APIError(
+            400,
+            "Nothing stored",
+            "Every file was empty, too large, or a duplicate.",
+            [{"field": "files", "message": "; ".join(warnings)}],
+        )
     db.commit()
     return {"id": dataset.id, "name": dataset.name, "emails": stored, "warnings": warnings}
 
@@ -144,7 +158,9 @@ def reset_demo(db: Session) -> dict[str, Any]:
     for dataset in db.scalars(select(Dataset)).all():
         email_ids = list(db.scalars(select(Email.id).where(Email.dataset_id == dataset.id)))
         if email_ids:
-            db.query(Analysis).filter(Analysis.email_id.in_(email_ids)).delete(synchronize_session=False)
+            db.query(Analysis).filter(Analysis.email_id.in_(email_ids)).delete(
+                synchronize_session=False
+            )
         db.query(Email).filter(Email.dataset_id == dataset.id).delete(synchronize_session=False)
         db.delete(dataset)
     db.commit()
@@ -181,7 +197,9 @@ def _joined(db: Session, dataset_id: str) -> list[tuple[Email, Analysis]]:
     if dataset is None:
         raise APIError(404, "Dataset not found", "That dataset is not in this database.")
     rows = db.execute(
-        select(Email, Analysis).join(Analysis, Analysis.email_id == Email.id).where(Email.dataset_id == dataset_id)
+        select(Email, Analysis)
+        .join(Analysis, Analysis.email_id == Email.id)
+        .where(Email.dataset_id == dataset_id)
     ).all()
     return [(email, analysis) for email, analysis in rows]
 
@@ -273,7 +291,9 @@ def validation_report(
 ) -> dict[str, Any]:
     joined = _joined(db, dataset_id)
     messages = [(email.filename, email.raw_text) for email, _analysis in joined]
-    labels = {email.filename: email.ground_truth for email, _analysis in joined if email.ground_truth}
+    labels = {
+        email.filename: email.ground_truth for email, _analysis in joined if email.ground_truth
+    }
     org = _config(db, baseline_id, "untrained").org_domains
     report = validate_messages(messages, labels, org)
     body = report.model_dump(mode="json")
@@ -300,7 +320,19 @@ def validation_report(
 def report_csv(report: dict[str, Any]) -> str:
     buffer = io.StringIO()
     writer = csv.writer(buffer)
-    writer.writerow(["filename", "subject", "ground_truth", "prediction", "risk_score", "band", "attack_vector", "correct", "top_evidence"])
+    writer.writerow(
+        [
+            "filename",
+            "subject",
+            "ground_truth",
+            "prediction",
+            "risk_score",
+            "band",
+            "attack_vector",
+            "correct",
+            "top_evidence",
+        ]
+    )
     for row in report["per_email"]:
         writer.writerow(
             [
@@ -384,7 +416,9 @@ def _zip(filename: str, data: bytes, warnings: list[str]) -> list[tuple[str, byt
             continue
         parts = Path(info.filename).parts
         if info.filename.startswith("/") or ".." in parts:
-            raise APIError(400, "Unsafe zip", f"{filename} contains a path that leaves the archive.")
+            raise APIError(
+                400, "Unsafe zip", f"{filename} contains a path that leaves the archive."
+            )
         if info.file_size > MAX_FILE:
             warnings.append(f"{info.filename} is larger than 2 MB and was skipped.")
             continue
@@ -399,3 +433,369 @@ def _zip(filename: str, data: bytes, warnings: list[str]) -> list[tuple[str, byt
 
 def open_session() -> Session:
     return ensure_db()()
+
+
+def import_config_text(db: Session, filename: str, text: str) -> dict[str, Any]:
+    import yaml
+
+    from layersight.config.adapter import ConfigError, adapt
+
+    loaded = yaml.safe_load(text)
+    if not isinstance(loaded, dict):
+        raise APIError(422, "Invalid layer configuration", "The file must be a YAML mapping.")
+    try:
+        config, warnings = adapt(loaded, source=filename or "upload")
+    except ConfigError as exc:
+        raise APIError(422, "Invalid layer configuration", exc.detail, exc.fields) from exc
+    row_id = Path(filename).stem or str(uuid.uuid4())
+    payload = config.model_dump_json()
+    existing = db.get(ConfigRow, row_id)
+    if existing is None:
+        db.add(ConfigRow(id=row_id, name=config.name, body=payload))
+    else:
+        existing.name = config.name
+        existing.body = payload
+    db.commit()
+    return {
+        "id": row_id,
+        "name": config.name,
+        "warnings": warnings,
+        "config": config.model_dump(mode="json"),
+    }
+
+
+def simulate_dataset(
+    db: Session,
+    dataset_id: str,
+    config_id: str | None,
+    *,
+    runs: int = 10000,
+    seed: int = 42,
+    persist: bool = True,
+) -> dict[str, Any]:
+    from layersight import __version__
+    from layersight.models import Bundle
+    from layersight.simulation.compare import simulate
+    from layersight.simulation.montecarlo import wilson
+
+    config = _config(db, config_id, "untrained")
+    per_email: list[dict[str, Any]] = []
+    for email, analysis_row in _joined(db, dataset_id):
+        bundle = Bundle.model_validate_json(analysis_row.payload)
+        if bundle.analysis.label != "phishing":
+            continue
+        simulated = simulate(bundle.analysis, email.sha256, config, runs=runs, seed=seed)
+        item = simulated.model_dump(mode="json")
+        item["filename"] = email.filename
+        item["id"] = email.id
+        per_email.append(item)
+    closed_values = [float(item["closed_form"]) for item in per_email]
+    rates = [float(item["pass_rate"]) for item in per_email]
+    closed = sum(closed_values) / len(closed_values) if closed_values else 0.0
+    rate = sum(rates) / len(rates) if rates else 0.0
+    passed = sum(int(item["passed"]) for item in per_email)
+    low, high = wilson(passed, max(len(per_email), 1) * runs)
+    body: dict[str, Any] = {
+        "dataset_id": dataset_id,
+        "config_id": config_id or "untrained",
+        "runs": runs,
+        "seed": seed,
+        "engine_version": __version__,
+        "config_snapshot": config.model_dump(mode="json"),
+        "per_email": per_email,
+        "aggregate": {
+            "email_count": len(per_email),
+            "runs": runs,
+            "pass_rate": rate,
+            "blocked_rate": 1.0 - rate,
+            "closed_form": closed,
+            "ci95": [low, high],
+            "layers": _mean_layers(per_email),
+        },
+    }
+    if not persist:
+        body["id"] = None
+        return body
+    run_id = str(uuid.uuid4())
+    body["id"] = run_id
+    db.add(
+        RunRow(
+            id=run_id,
+            dataset_id=dataset_id,
+            kind="simulation",
+            runs=runs,
+            seed=seed,
+            body=json.dumps(body),
+        )
+    )
+    db.commit()
+    return body
+
+
+def load_run(db: Session, run_id: str) -> dict[str, Any]:
+    row = db.get(RunRow, run_id)
+    if row is None:
+        raise APIError(404, "Run not found", "That simulation is not in this database.")
+    loaded = json.loads(row.body)
+    if not isinstance(loaded, dict):
+        raise APIError(500, "Stored run is unreadable", "The saved simulation is not valid JSON.")
+    return loaded
+
+
+def compare_configs(
+    db: Session,
+    dataset_id: str,
+    config_a_id: str,
+    config_b_id: str,
+    *,
+    runs: int = 10000,
+    seed: int = 42,
+) -> dict[str, Any]:
+    from layersight import __version__
+    from layersight.models import Bundle
+    from layersight.simulation.compare import compare_email, narrative
+
+    left = _config(db, config_a_id, "untrained")
+    right = _config(db, config_b_id, "trained")
+    deltas: list[dict[str, Any]] = []
+    closed_a: list[float] = []
+    closed_b: list[float] = []
+    for email, analysis_row in _joined(db, dataset_id):
+        bundle = Bundle.model_validate_json(analysis_row.payload)
+        if bundle.analysis.label != "phishing":
+            continue
+        item = compare_email(bundle.analysis, email.sha256, left, right, runs=runs, seed=seed)
+        closed_a.append(item.baseline.simulation.closed_form)
+        closed_b.append(item.comparison.simulation.closed_form)
+        deltas.append(
+            {
+                "email_id": email.id,
+                "filename": email.filename,
+                "sha256": email.sha256,
+                "pass_rate_a": item.baseline.simulation.pass_rate,
+                "pass_rate_b": item.comparison.simulation.pass_rate,
+                "closed_form_a": item.baseline.simulation.closed_form,
+                "closed_form_b": item.comparison.simulation.closed_form,
+                "absolute_reduction": item.baseline.simulation.closed_form
+                - item.comparison.simulation.closed_form,
+            }
+        )
+    before = sum(closed_a) / len(closed_a) if closed_a else 0.0
+    after = sum(closed_b) / len(closed_b) if closed_b else 0.0
+    relative = 0.0 if before <= 0 else (before - after) / before
+    body = {
+        "dataset_id": dataset_id,
+        "config_a_id": config_a_id,
+        "config_b_id": config_b_id,
+        "config_a_name": left.name,
+        "config_b_name": right.name,
+        "runs": runs,
+        "seed": seed,
+        "engine_version": __version__,
+        "absolute_reduction": before - after,
+        "relative_reduction": relative,
+        "narrative": narrative(left, right, before, after),
+        "per_email": deltas,
+    }
+    run_id = str(uuid.uuid4())
+    body["id"] = run_id
+    db.add(
+        RunRow(
+            id=run_id,
+            dataset_id=dataset_id,
+            kind="comparison",
+            runs=runs,
+            seed=seed,
+            body=json.dumps(body),
+        )
+    )
+    db.commit()
+    return body
+
+
+def recommend_dataset(db: Session, dataset_id: str, config_id: str | None) -> dict[str, Any]:
+    from layersight.models import Bundle
+    from layersight.refs import assumptions
+    from layersight.simulation.model import layer_probabilities
+    from layersight.simulation.montecarlo import closed_form
+
+    config = _config(db, config_id, "untrained")
+    analyses = []
+    for _email, analysis_row in _joined(db, dataset_id):
+        bundle = Bundle.model_validate_json(analysis_row.payload)
+        if bundle.analysis.label == "phishing":
+            analyses.append(bundle.analysis)
+    if not analyses:
+        return {"base_pass_rate": 0.0, "recommendations": [], "sensitivity": []}
+    table = assumptions()
+
+    def mean_closed(current: LayerConfig) -> float:
+        rates = [
+            closed_form([layer.p_stop for layer in layer_probabilities(item, current, table)])
+            for item in analyses
+        ]
+        return sum(rates) / len(rates)
+
+    base = mean_closed(config)
+    recommendations: list[dict[str, Any]] = []
+    for candidate_id, title, detail, layer, updated in _recommendation_candidates(config):
+        rate = mean_closed(updated)
+        reduction = base - rate
+        if reduction <= 1e-6:
+            continue
+        helped = {
+            item.attack_vector
+            for item in analyses
+            if closed_form([layer.p_stop for layer in layer_probabilities(item, config, table)])
+            - closed_form([layer.p_stop for layer in layer_probabilities(item, updated, table)])
+            > 1e-6
+        }
+        recommendations.append(
+            {
+                "id": candidate_id,
+                "title": title,
+                "detail": detail,
+                "layer": layer,
+                "absolute_reduction": reduction,
+                "relative_reduction": 0.0 if base <= 0 else reduction / base,
+                "vectors_helped": sorted(helped),
+            }
+        )
+    recommendations.sort(key=lambda item: (-float(item["absolute_reduction"]), str(item["title"])))
+    names = ("email_filter", "user", "application_control", "antivirus", "segmentation")
+    sensitivity = []
+    for index, name in enumerate(names):
+        sensitivity.append(
+            {
+                "layer": name,
+                "baseline": base,
+                "decreased": _shifted(analyses, config, table, index, -0.1),
+                "increased": _shifted(analyses, config, table, index, 0.1),
+            }
+        )
+    return {"base_pass_rate": base, "recommendations": recommendations, "sensitivity": sensitivity}
+
+
+def override_vector(db: Session, email_id: str, attack_vector: str) -> dict[str, Any]:
+    email = db.get(Email, email_id)
+    if email is None:
+        raise APIError(404, "Email not found", "That email is not in this database.")
+    analysis_row = db.scalar(select(Analysis).where(Analysis.email_id == email_id))
+    if analysis_row is None:
+        raise APIError(404, "Analysis missing", "This email has no stored analysis.")
+    payload = json.loads(analysis_row.payload)
+    payload["analysis"]["attack_vector"] = attack_vector
+    payload["analysis"]["vector_reason"] = "An analyst overrode the attack vector."
+    analysis_row.payload = json.dumps(payload)
+    analysis_row.label = payload["analysis"]["label"]
+    db.commit()
+    return email_detail(db, email_id, baseline_id=None, comparison_id=None, runs=1000, seed=42)
+
+
+def _mean_layers(per_email: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if not per_email or not per_email[0].get("layers"):
+        return []
+    count = len(per_email)
+    rows: list[dict[str, Any]] = []
+    for index, layer in enumerate(per_email[0]["layers"]):
+        rows.append(
+            {
+                "layer": layer["layer"],
+                "applicable": any(item["layers"][index]["applicable"] for item in per_email),
+                "p_stop": sum(float(item["layers"][index]["p_stop"]) for item in per_email) / count,
+                "reasons": ["Equal-weighted mean across predicted phishing emails."],
+                "entered": int(
+                    round(sum(int(item["layers"][index]["entered"]) for item in per_email) / count)
+                ),
+                "stopped": int(
+                    round(sum(int(item["layers"][index]["stopped"]) for item in per_email) / count)
+                ),
+            }
+        )
+    return rows
+
+
+def _shifted(
+    analyses: list[Any],
+    config: LayerConfig,
+    table: Any,
+    index: int,
+    delta: float,
+) -> float:
+    from layersight.simulation.model import layer_probabilities
+    from layersight.simulation.montecarlo import closed_form
+
+    rates: list[float] = []
+    for analysis in analyses:
+        layers = layer_probabilities(analysis, config, table)
+        probabilities: list[float] = []
+        for position, layer in enumerate(layers):
+            probability = layer.p_stop
+            if position == index and layer.applicable:
+                probability = min(0.98, max(0.0, probability + delta))
+            probabilities.append(probability)
+        rates.append(closed_form(probabilities))
+    return sum(rates) / len(rates) if rates else 0.0
+
+
+def _recommendation_candidates(config: LayerConfig) -> list[tuple[str, str, str, str, LayerConfig]]:
+    from layersight.config.schema import FilterRule, Match
+
+    found: list[tuple[str, str, str, str, LayerConfig]] = []
+    levels = ["none", "basic", "advanced"]
+    level = config.user_training.level
+    if config.user_training.catch_rate is None and level in levels[:-1]:
+        nxt = levels[levels.index(level) + 1]
+        found.append(
+            (
+                "raise_training",
+                f"Advance user training to {nxt}",
+                "Training changes every phishing email, including ones antivirus cannot see.",
+                "user",
+                config.model_copy(
+                    update={"user_training": config.user_training.model_copy(update={"level": nxt})}
+                ),
+            )
+        )
+    if not any(
+        rule.id == "quarantine_dmarc_fail" and rule.enabled for rule in config.email_filter.rules
+    ):
+        rule = FilterRule(
+            id="quarantine_dmarc_fail",
+            description="Quarantine messages that fail DMARC",
+            match=Match(feature="auth.dmarc", op="eq", value="fail"),
+            catch_rate=0.85,
+        )
+        rules = [*config.email_filter.rules, rule]
+        found.append(
+            (
+                "quarantine_dmarc",
+                "Quarantine DMARC failures",
+                "Add a filter rule that catches DMARC failures at 85%.",
+                "email_filter",
+                config.model_copy(
+                    update={"email_filter": config.email_filter.model_copy(update={"rules": rules})}
+                ),
+            )
+        )
+    if config.antivirus.detection_rate < 0.99:
+        found.append(
+            (
+                "antivirus_detection",
+                "Raise antivirus detection 15 points",
+                "Endpoint detection only changes malware.",
+                "antivirus",
+                config.model_copy(
+                    update={
+                        "antivirus": config.antivirus.model_copy(
+                            update={
+                                "detection_rate": min(
+                                    1.0, round(config.antivirus.detection_rate + 0.15, 3)
+                                )
+                            }
+                        )
+                    }
+                ),
+            )
+        )
+    return found

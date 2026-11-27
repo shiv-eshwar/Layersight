@@ -1,4 +1,4 @@
-.PHONY: setup test dev api web db db-stop simulate compare recommend e2e rehearse video perf offline-check demo-check
+.PHONY: setup test dev api web db db-stop simulate compare recommend demo types e2e rehearse video perf offline-check demo-check
 
 # Postgres in Docker when it is available, then the API and the web app on the host.
 dev:
@@ -62,3 +62,10 @@ offline-check:
 	./scripts/demo/offline-check.sh
 
 demo-check: offline-check perf e2e
+
+demo:
+	uv run python -m app.demo_seed
+
+types:
+	uv run python scripts/export_openapi.py
+	pnpm --dir web exec openapi-typescript ../api/openapi.json -o lib/api-types.ts

@@ -1,20 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { AssumptionsSheet } from "@/components/shell/assumptions-sheet";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { WorkspaceControls } from "@/components/shell/workspace";
 import { isActive, navigation } from "@/lib/navigation";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const params = useSearchParams();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const selection = mounted ? params.toString() : "";
 
   return (
     <div className="min-h-screen">
@@ -39,7 +38,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               return (
                 <Link
                   key={item.href}
-                  href={item.href}
+                  href={selection ? `${item.href}?${selection}` : item.href}
+                  data-testid={item.href === "/triage" ? "nav-triage" : undefined}
                   aria-current={active ? "page" : undefined}
                   className={
                     active
@@ -52,34 +52,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
-          <div className="hidden shrink-0 items-center gap-2 lg:flex">
-            <ContextMenu
-              label="Illustrative set"
-              note="Defense, Simulator, and Compare use five phishing emails, including the malware case where all five layers apply."
-            />
-            <ContextMenu
-              label="Untrained v1 → Trained v2"
-              note="Defense edits the baseline. Compare states that pair in one sentence. Unsaved edits are included."
-            />
-            <AssumptionsSheet />
-          </div>
+          <AssumptionsSheet />
+        </div>
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 border-t border-border px-4 py-2">
+          <WorkspaceControls />
         </div>
       </header>
       <div id="content">{children}</div>
     </div>
-  );
-}
-
-function ContextMenu({ label, note }: { label: string; note: string }) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="outline" size="sm" />}>{label}</DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="max-w-72">
-        <DropdownMenuItem disabled className="whitespace-normal opacity-100">
-          {note}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }
 

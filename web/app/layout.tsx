@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { Suspense } from "react";
 
+import { Providers } from "@/components/providers";
 import { AppShell } from "@/components/shell/app-shell";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -32,9 +34,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={`dark ${inter.variable} ${jetbrains.variable}`}>
       <body className="min-h-screen bg-background font-sans text-foreground antialiased">
-        <TooltipProvider>
-          <AppShell>{children}</AppShell>
-        </TooltipProvider>
+        <Providers>
+          <TooltipProvider>
+            <Suspense fallback={null}>
+              <AppShell>{children}</AppShell>
+            </Suspense>
+          </TooltipProvider>
+        </Providers>
       </body>
     </html>
   );
