@@ -1,0 +1,15 @@
+{
+  "name": "layersight-e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test rehearse-lib.test.mjs harness/fixture.test.mjs",
+    "e2e": "playwright test",
+    "e2e:app": "E2E_TARGET=app playwright test",
+    "rehearse": "node rehearse.mjs",
+    "record": "node record-backup.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1"
+  }
+}

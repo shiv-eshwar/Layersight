@@ -1,0 +1,23 @@
+{
+  "limit_seconds": 180,
+  "pass": true,
+  "consecutive": 3,
+  "runs": [
+    {
+      "index": 1,
+      "ok": true,
+      "seconds": 1.226
+    },
+    {
+      "index": 2,
+      "ok": true,
+      "seconds": 1.205
+    },
+    {
+      "index": 3,
+      "ok": true,
+      "seconds": 1.168
+    }
+  ],
+  "at": "2026-11-27T04:48:23.511Z"
+}

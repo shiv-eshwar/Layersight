@@ -1,0 +1,120 @@
+:root {
+  color-scheme: dark;
+  --midnight: #0b1120;
+  --graphite: #172334;
+  --intelligence: #38bdf8;
+  --protected: #10b981;
+  --warning: #f59e0b;
+  --threat: #ef4444;
+  --border: #24324a;
+  --text: #e6edf7;
+  --muted: #8a9bb4;
+  --sans: Inter, ui-sans-serif, system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--midnight);
+  color: var(--text);
+  font: 14px/1.5 var(--sans);
+}
+
+a { color: var(--intelligence); }
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 24px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+
+main { padding: 24px; max-width: 1100px; }
+
+h1 { font-size: 28px; font-weight: 600; margin: 0 0 16px; }
+
+h2 { font-size: 16px; margin: 0 0 8px; }
+
+.mono { font-family: var(--mono); }
+
+[data-testid="screen-loading"],
+[data-testid="screen-empty"],
+[data-testid="screen-error"],
+[data-testid="figures-note"] {
+  background: var(--graphite);
+  border: 1px solid var(--border);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+[data-testid="triage-dropzone"] {
+  border: 1px dashed var(--border);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+[data-testid="triage-table"] { display: grid; gap: 8px; }
+
+[data-testid="triage-row"] {
+  display: grid;
+  grid-template-columns: 1.4fr 1.2fr 0.6fr 0.4fr 0.8fr 0.8fr;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--graphite);
+  text-decoration: none;
+  color: inherit;
+}
+
+[data-label="phishing"] [class] { color: inherit; }
+
+[data-label="phishing"] { box-shadow: inset 3px 0 0 var(--threat); }
+
+[data-label="genuine"] { box-shadow: inset 3px 0 0 var(--protected); }
+
+[data-status="fail"],
+[data-mismatch="true"] { color: var(--threat); }
+
+[data-status="pass"] { color: var(--protected); }
+
+table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; }
+
+th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); }
+
+article, .layers article {
+  background: var(--graphite);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+[data-testid="demo-caption"] {
+  max-width: 65ch;
+  color: var(--muted);
+  margin-top: 24px;
+}
+
+[data-testid="title-card"] {
+  min-height: 40vh;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  font-weight: 600;
+  text-align: center;
+}
+
+@media print {
+  nav, .topbar, [data-testid="show-title-card"] { display: none; }
+  body { background: white; color: black; }
+}

@@ -1,0 +1,29 @@
+name: Demo
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/e2e/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: web/e2e
+      - run: pnpm exec playwright install --with-deps chromium
+        working-directory: web/e2e
+      - run: node --test rehearse-lib.test.mjs harness/fixture.test.mjs
+        working-directory: web/e2e
+      - run: pnpm exec playwright test
+        working-directory: web/e2e
+      - run: node scripts/demo/scan-external.mjs

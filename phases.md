@@ -139,13 +139,13 @@ flowchart LR
 
 **Goal:** a demo that can't fail.
 
-- [ ] Playwright spec for the exact demo path.
-- [ ] Demo mode verified with Wi-Fi off.
-- [ ] States everywhere; zero console errors.
-- [ ] Performance check.
-- [ ] README: one-command setup, CLI fallback, assumptions, doc links.
-- [ ] Backup video.
-- [ ] Three timed rehearsals.
+- [x] Playwright spec for the exact demo path.
+- [x] Demo mode verified with Wi-Fi off.
+- [x] States everywhere; zero console errors.
+- [x] Performance check.
+- [x] README: one-command setup, CLI fallback, assumptions, doc links.
+- [x] Backup video.
+- [x] Three timed rehearsals.
 
 **Exit:** two consecutive clean rehearsals under 3:00; fresh clone to running demo in under 10 minutes.
 
