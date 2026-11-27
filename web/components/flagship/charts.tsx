@@ -295,8 +295,7 @@ export function TornadoChart({ rows }: { rows: SensitivityRow[] }) {
         })}
       </ul>
       <p className="mt-3 text-xs text-[#8A9BB4]">
-        Center is the current pass-through, {rows[0] ? formatPct(rows[0].baseline) : ""}. Green means the
-        layer was strengthened.
+        {`Center is the current pass-through, ${rows[0] ? formatPct(rows[0].baseline) : ""}. Green means the layer was strengthened.`}
       </p>
     </figure>
   );
