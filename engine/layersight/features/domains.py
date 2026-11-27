@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ipaddress
+import os
 import re
 from dataclasses import dataclass
 from functools import lru_cache
@@ -48,9 +49,11 @@ class Similarity:
 
 @lru_cache(maxsize=1)
 def _extractor() -> tldextract.TLDExtract:
+    # Vercel's home directory is not a reliable cache. /tmp is writable there.
+    cache_dir = "/tmp/layersight-tld" if os.environ.get("VERCEL") else None
     return tldextract.TLDExtract(
         suffix_list_urls=(_PSL.as_uri(),),
-        cache_dir=None,
+        cache_dir=cache_dir,
         fallback_to_snapshot=True,
     )
 

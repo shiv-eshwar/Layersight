@@ -8,6 +8,7 @@ __pycache__/
 *.egg-info/
 .DS_Store
 out/
+.vercel/
 *.db
 api/openapi.json
 engine/layersight/features/.tld_cache/
