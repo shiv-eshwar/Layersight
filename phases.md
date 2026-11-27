@@ -55,16 +55,16 @@ flowchart LR
 
 **Goal:** classify correctly and explain why.
 
-- [ ] Tolerant parser (RFC 5322, MIME, simplified text), attachment metadata, auth results.
-- [ ] Link extraction from HTML and text.
-- [ ] Registrable-domain utilities (offline tldextract, IDN).
-- [ ] Domain similarity v1 (homoglyph, TLD swap, subdomain abuse, combosquat, typosquat).
-- [ ] Rules H01–H04, A01–A04, L01–L09, C01–C05, T01–T05, G01–G02 with positive and negative tests.
-- [ ] Scorer, bands, evidence contributions, weights hash.
-- [ ] Advice templates.
-- [ ] Attack vector classifier with reasons.
-- [ ] CLI `analyze`, `validate`, `similarity`.
-- [ ] Tune on dev → evaluate on test → error analysis → iterate on dev.
+- [x] Tolerant parser (RFC 5322, MIME, simplified text), attachment metadata, auth results.
+- [x] Link extraction from HTML and text.
+- [x] Registrable-domain utilities (offline tldextract, IDN).
+- [x] Domain similarity v1 (homoglyph, TLD swap, subdomain abuse, combosquat, typosquat).
+- [x] Rules H01–H04, A01–A04, L01–L09, C01–C05, T01–T05, G01–G02 with positive and negative tests.
+- [x] Scorer, bands, evidence contributions, weights hash.
+- [x] Advice templates.
+- [x] Attack vector classifier with reasons.
+- [x] CLI `analyze`, `validate`, `similarity`.
+- [x] Tune on dev → evaluate on test → error analysis → iterate on dev.
 
 **Exit:** ≥ 18/20 on `data/test`; every evidence item has a plain-language explanation; validation gate in CI.
 
@@ -72,15 +72,15 @@ flowchart LR
 
 **Goal:** email-specific, vector-aware pass-through for any config, and comparisons.
 
-- [ ] Canonical config schema with clear validation messages.
-- [ ] Adapter for the official config format; both files load.
-- [ ] `assumptions.yaml`.
-- [ ] Filter-rule DSL and matcher.
-- [ ] Layer probability model with reasons and applicability matrix.
-- [ ] Vectorized Monte Carlo, per-email seeding, closed form, Wilson interval, aggregate.
-- [ ] Comparison with common random numbers, config diff, narrative.
-- [ ] Golden and property tests.
-- [ ] CLI `simulate`, `compare`.
+- [x] Canonical config schema with clear validation messages.
+- [x] Adapter for the official config format; both files load.
+- [x] `assumptions.yaml`.
+- [x] Filter-rule DSL and matcher.
+- [x] Layer probability model with reasons and applicability matrix.
+- [x] Vectorized Monte Carlo, per-email seeding, closed form, Wilson interval, aggregate.
+- [x] Comparison with common random numbers, config diff, narrative.
+- [x] Golden and property tests.
+- [x] CLI `simulate`, `compare`.
 
 **Exit:** CLI prints per-email and aggregate pass-through for both official configs; MC inside the interval for every email; golden test passes. **Core target met.**
 

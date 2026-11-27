@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import TypedDict
 
 import typer
 from rich.console import Console
@@ -15,11 +16,21 @@ from layersight.features.domains import similarity
 from layersight.refs import protected_domains
 from layersight.scoring.analyze import analyze_email
 from layersight.simulation.compare import aggregate, compare_email, narrative
+from layersight.simulation.compare import simulate as run_simulation
 from layersight.simulation.recommend import build_recommendations
 from layersight.validation.metrics import read_messages, validate_directory
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 console = Console()
+
+
+class _SimRow(TypedDict):
+    filename: str
+    vector: str
+    pass_rate: float
+    closed_form: float
+    ci_low: float
+    ci_high: float
 
 
 @app.command()
@@ -100,13 +111,17 @@ def similarity_cmd(
 ) -> None:
     """Score one domain against protected brands and organization domains."""
     result = similarity(domain, protected_domains(org_domain or ["company.com"]))
-    console.print_json(json.dumps({
-        "domain": domain,
-        "score": result.score,
-        "closest": result.closest,
-        "technique": result.technique,
-        "diff": [item.model_dump() for item in result.diff],
-    }))
+    console.print_json(
+        json.dumps(
+            {
+                "domain": domain,
+                "score": result.score,
+                "closest": result.closest,
+                "technique": result.technique,
+                "diff": [item.model_dump() for item in result.diff],
+            }
+        )
+    )
 
 
 @app.command()
@@ -119,16 +134,14 @@ def simulate(
 ) -> None:
     """Per-email and aggregate pass-through for predicted phishing."""
     layer_config, warnings = _load(config)
-    rows = []
+    rows: list[_SimRow] = []
     skipped = 0
     for filename, raw in _messages(path):
         bundle = analyze_email(raw, layer_config.org_domains)
         if bundle.analysis.label != "phishing":
             skipped += 1
             continue
-        from layersight.simulation.compare import simulate as run_sim
-
-        result = run_sim(bundle.analysis, bundle.sha256, layer_config, runs=runs, seed=seed)
+        result = run_simulation(bundle.analysis, bundle.sha256, layer_config, runs=runs, seed=seed)
         low, high = result.ci95
         rows.append(
             {
@@ -136,23 +149,29 @@ def simulate(
                 "vector": result.attack_vector,
                 "pass_rate": result.pass_rate,
                 "closed_form": result.closed_form,
-                "ci95": [low, high],
+                "ci_low": low,
+                "ci_high": high,
             }
         )
     if not rows:
         console.print("No phishing emails to simulate.")
         raise typer.Exit(code=1)
-    payload = {
-        "config": layer_config.name,
-        "seed": seed,
-        "runs": runs,
-        "skipped_genuine": skipped,
-        "emails": rows,
-        "aggregate_closed_form": sum(row["closed_form"] for row in rows) / len(rows),
-        "aggregate_pass_rate": sum(row["pass_rate"] for row in rows) / len(rows),
-    }
+    closed_mean = sum(row["closed_form"] for row in rows) / len(rows)
+    monte_mean = sum(row["pass_rate"] for row in rows) / len(rows)
     if as_json:
-        console.print_json(json.dumps(payload))
+        console.print_json(
+            json.dumps(
+                {
+                    "config": layer_config.name,
+                    "seed": seed,
+                    "runs": runs,
+                    "skipped_genuine": skipped,
+                    "emails": rows,
+                    "aggregate_closed_form": closed_mean,
+                    "aggregate_pass_rate": monte_mean,
+                }
+            )
+        )
         return
     for warning in warnings:
         console.print(f"warning: {warning}")
@@ -163,24 +182,21 @@ def simulate(
     table.add_column("Monte Carlo", justify="right")
     table.add_column("95% CI", justify="right")
     for row in rows:
-        low, high = row["ci95"]
         table.add_row(
-            str(row["filename"]),
-            str(row["vector"]).replace("_", " "),
-            f"{float(row['closed_form']) * 100:.2f}%",
-            f"{float(row['pass_rate']) * 100:.2f}%",
-            f"{float(low) * 100:.2f}%–{float(high) * 100:.2f}%",
+            row["filename"],
+            row["vector"].replace("_", " "),
+            f"{row['closed_form'] * 100:.2f}%",
+            f"{row['pass_rate'] * 100:.2f}%",
+            f"{row['ci_low'] * 100:.2f}%–{row['ci_high'] * 100:.2f}%",
         )
     console.print(table)
+    skipped_note = f", skipped {skipped} genuine" if skipped else ""
     console.print(
-        f"Aggregate pass-through (equal-weighted, {len(rows)} phishing"
-        + (f", skipped {skipped} genuine" if skipped else "")
-        + f"): closed form {float(payload['aggregate_closed_form']) * 100:.2f}%, "
-        f"Monte Carlo {float(payload['aggregate_pass_rate']) * 100:.2f}%."
+        f"Aggregate pass-through (equal-weighted, {len(rows)} phishing{skipped_note}): "
+        f"closed form {closed_mean * 100:.2f}%, Monte Carlo {monte_mean * 100:.2f}%."
     )
     console.print(
-        "Pass-through is a modeled estimate. "
-        "Layers are assumed independent given the email."
+        "Pass-through is a modeled estimate. Layers are assumed independent given the email."
     )
 
 
@@ -214,20 +230,26 @@ def compare(
     summary_right = aggregate(rights)
     sentence = narrative(left, right, summary_left.closed_form, summary_right.closed_form)
     if as_json:
-        console.print_json(json.dumps({
-            "narrative": sentence,
-            "closed_form_a": summary_left.closed_form,
-            "closed_form_b": summary_right.closed_form,
-            "relative_reduction": _relative(summary_left.closed_form, summary_right.closed_form),
-            "emails": [
+        console.print_json(
+            json.dumps(
                 {
-                    "filename": filename,
-                    "closed_form_a": item.baseline.simulation.closed_form,
-                    "closed_form_b": item.comparison.simulation.closed_form,
+                    "narrative": sentence,
+                    "closed_form_a": summary_left.closed_form,
+                    "closed_form_b": summary_right.closed_form,
+                    "relative_reduction": _relative(
+                        summary_left.closed_form, summary_right.closed_form
+                    ),
+                    "emails": [
+                        {
+                            "filename": filename,
+                            "closed_form_a": item.baseline.simulation.closed_form,
+                            "closed_form_b": item.comparison.simulation.closed_form,
+                        }
+                        for filename, item in per_email
+                    ],
                 }
-                for filename, item in per_email
-            ],
-        }))
+            )
+        )
         return
     for warning in [*warnings_a, *warnings_b]:
         console.print(f"warning: {warning}")

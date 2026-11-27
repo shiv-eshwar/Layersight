@@ -138,6 +138,28 @@ def test_matched_rules_and_password_archive() -> None:
     assert any("halved" in reason for reason in antivirus.reasons)
 
 
+def test_practice_set_intervals_cover_the_closed_form_with_rare_misses() -> None:
+    """A 95% Wilson interval misses about one email in twenty. Seed 42 misses two of twelve."""
+
+    from layersight.scoring.analyze import analyze_email
+    from layersight.validation.metrics import read_messages
+
+    config, _warnings = load_config(ROOT / "data" / "test" / "configs" / "untrained.yaml")
+    misses = 0
+    checked = 0
+    for _name, raw in read_messages(ROOT / "data" / "test" / "emails"):
+        bundle = analyze_email(raw, config.org_domains)
+        if bundle.analysis.label != "phishing":
+            continue
+        sim = simulate(bundle.analysis, bundle.sha256, config, runs=10_000, seed=42)
+        low, high = sim.ci95
+        checked += 1
+        if not low <= sim.closed_form <= high:
+            misses += 1
+    assert checked == 12
+    assert misses <= 2
+
+
 def test_narrative_matches_the_illustrative_sentence() -> None:
     untrained, trained = _configs()
     email = _email()
@@ -187,7 +209,8 @@ def test_training_is_the_top_recommendation_and_antivirus_misses_credential_thef
     credential = _email(email_id="credential", attack_vector="credential_harvest")
     report = build_recommendations([malware, credential, credential], untrained)
     assert report.recommendations[0].id == "next_training_level"
-    credential_ids = {item.id for item in build_recommendations([credential], untrained).recommendations}
+    credential_report = build_recommendations([credential], untrained)
+    credential_ids = {item.id for item in credential_report.recommendations}
     assert "better_antivirus" not in credential_ids
     user = next(bar for bar in report.sensitivity if bar.layer == "user")
     antivirus = next(bar for bar in report.sensitivity if bar.layer == "antivirus")
