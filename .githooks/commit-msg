@@ -1,0 +1,45 @@
+#!/bin/sh
+# Authorship rule for this repository (see github.md):
+# shiv-eshwar is the only author, committer and contributor.
+
+ALLOWED_NAME="shiv-eshwar"
+ALLOWED_EMAILS="bl.en.u4cse23072@bl.students.amrita.edu 149902164+shiv-eshwar@users.noreply.github.com"
+TRAILERS='^[[:space:]]*(co-authored-by|made-with|generated-by|assisted-by):'
+
+msg_file="$1"
+
+fail() {
+  echo "commit-msg: $1" >&2
+  echo "commit-msg: see github.md, section 'Authorship rules'." >&2
+  exit 1
+}
+
+check_identity() {
+  role="$1"
+  ident="$(git var "GIT_${role}_IDENT")" || fail "could not read the $role identity"
+  name="${ident%% <*}"
+  email="${ident#*<}"
+  email="${email%%>*}"
+  [ "$name" = "$ALLOWED_NAME" ] || fail "$role name is '$name', expected '$ALLOWED_NAME'"
+  case " $ALLOWED_EMAILS " in
+    *" $email "*) ;;
+    *) fail "$role email '$email' is not one of shiv-eshwar's GitHub emails" ;;
+  esac
+}
+
+check_identity AUTHOR
+check_identity COMMITTER
+
+if grep -qiE "$TRAILERS" "$msg_file"; then
+  tmp="$(mktemp)"
+  grep -viE "$TRAILERS" "$msg_file" > "$tmp"
+  cat "$tmp" > "$msg_file"
+  rm -f "$tmp"
+  echo "commit-msg: removed co-author/attribution trailers." >&2
+fi
+
+if grep -qiE 'cursoragent|cursor agent|(generated|made) (with|by) cursor' "$msg_file"; then
+  fail "the commit message credits Cursor; remove that line"
+fi
+
+exit 0
